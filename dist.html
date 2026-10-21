@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekend Planner — Gợi ý hoạt động cuối tuần</title>
+<style>
+  :root {
+    color-scheme: dark; /* form control (select/option/spinner) render theo dark */
+    --bg: #07111f; --bg-2: #0d1a2d; --card: rgba(15, 23, 42, 0.76); --card-strong: #111d2f; --ink: #eaf2ff; --ink2: #bed0ef; --muted: #8ea7cc;
+    --peach: rgba(251, 146, 60, 0.12); --peach-ink: #fdba74; --blue: rgba(96, 165, 250, 0.12); --blue-ink: #93c5fd;
+    --green: rgba(34,197,94,0.12); --green-ink: #86efac; --yellow: rgba(250,204,21,0.12); --yellow-ink: #fcd34d;
+    --line: rgba(148,163,184,.18); --brand: #60a5fa; --brand-dark: #3b82f6; --score: #f59e0b; --shadow: 0 24px 50px rgba(2, 6, 23, .42);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; background: radial-gradient(circle at top, #10213b 0%, #081421 35%, #050d17 100%); color: var(--ink); }
+  .phone {
+    max-width: 430px; margin: 0 auto; min-height: 100vh; background: linear-gradient(180deg, rgba(13,26,45,1) 0%, rgba(8,17,31,1) 100%);
+    position: relative; padding-bottom: 76px; box-shadow: inset 0 0 0 1px rgba(148,163,184,0.08);
+  }
+  .phone::before {
+    content: ""; position: absolute; inset: 0; background:
+      radial-gradient(circle at top right, rgba(96, 165, 250, 0.18), transparent 24%),
+      radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.12), transparent 18%);
+    pointer-events: none;
+  }
+  .pad { padding: 14px 16px; }
+
+  /* Header */
+  .hdr { display: flex; align-items: center; justify-content: space-between; padding: 18px 16px 10px; position: relative; z-index: 1; }
+  .hdr .logo { display: flex; align-items: center; gap: 10px; }
+  .hdr .logo .ic { width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, #38bdf8, #2563eb); color: #fff; display: grid; place-items: center; font-size: 18px; box-shadow: 0 14px 20px rgba(96,165,250,.35); }
+  .hdr h1 { font-size: 17px; letter-spacing: -0.2px; font-weight: 800; }
+  .hdr .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .hdr .btns { display: flex; gap: 8px; }
+  .icon-btn { width: 36px; height: 36px; border-radius: 12px; border: 1px solid rgba(148,163,184,.14); background: rgba(15,23,42,.7); color: var(--ink2); font-size: 15px; cursor: pointer; box-shadow: 0 8px 14px rgba(2,6,23,.25); }
+  .avatar { background: linear-gradient(135deg, #38bdf8, #2563eb); color: #fff; border: none; box-shadow: 0 12px 18px rgba(37,99,235,.32); }
+
+  /* Chips điều kiện đang chọn */
+  .cond-card { margin: 10px 16px; background: rgba(15,23,42,.8); border: 1px solid rgba(96,165,250,.12); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); position: relative; z-index: 1; }
+  .cond-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+  .cond-head .t { font-size: 12.5px; color: var(--ink2); }
+  .cond-head .edit { font-size: 12px; color: var(--brand); font-weight: 700; cursor: pointer; background: none; border: none; }
+  .chip-mood { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(96,165,250,.18), rgba(14,165,233,.12)); color: var(--blue-ink); font-size: 13px; font-weight: 700; border-radius: 999px; padding: 6px 12px; border: 1px solid rgba(96,165,250,.16); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--ink2); background: rgba(15,23,42,.9); border: 1px solid rgba(148,163,184,.16); border-radius: 999px; padding: 5px 10px; }
+  .status-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--ink2); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot.g { background: #35c48d; } .dot.b { background: var(--brand); }
+  .status-row .right { margin-left: auto; color: var(--green-ink); font-weight: 600; }
+
+  /* View switching */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Cards kết quả */
+  .rank-badge { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,.92); color: #0f172a; font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 5px 10px; display: flex; align-items: center; gap: 4px; }
+  .score-badge { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.92); border-radius: 12px; padding: 4px 9px; text-align: center; }
+  .score-badge .n { font-size: 17px; font-weight: 800; color: var(--score); }
+  .score-badge .d { font-size: 9.5px; color: rgba(15,23,42,.75); }
+  .res-card { margin: 12px 16px; background: linear-gradient(180deg, rgba(15,23,42,.9), rgba(15,23,42,.8)); border: 1px solid rgba(96,165,250,.1); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); }
+  .hero { position: relative; height: 190px; display: flex; align-items: flex-end; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 42%, #38bdf8 100%); }
+  .hero.small { height: 120px; }
+  .hero .emoji-bg { position: absolute; right: 14px; top: 18px; font-size: 64px; opacity: .18; filter: saturate(1.2); }
+  .hero .cat { position: relative; color: rgba(255,255,255,.88); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; padding: 0 14px; }
+  .hero h2 { position: relative; color: #fff; font-size: 19px; line-height: 1.25; padding: 2px 14px 14px; text-shadow: 0 2px 12px rgba(13,18,32,.18); }
+  .res-body { padding: 12px 14px 14px; }
+  .meta-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mchip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; border-radius: 999px; padding: 5px 10px; }
+  .mchip.b { background: var(--blue); color: var(--blue-ink); }
+  .mchip.g { background: var(--green); color: var(--green-ink); }
+  .mchip.p { background: var(--peach); color: var(--peach-ink); }
+  .mchip.y { background: var(--yellow); color: var(--yellow-ink); }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 11px; }
+  .info { display: flex; gap: 9px; align-items: center; background: rgba(15, 23, 42, .85); border: 1px solid rgba(148,163,184,.14); border-radius: 13px; padding: 9px 11px; }
+  .info .ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 14px; flex: none; }
+  .info .ic.r { background: rgba(251, 146, 60, .15); } .info .ic.b { background: var(--blue); }
+  .info .l { font-size: 10.5px; color: var(--muted); }
+  .info .v { font-size: 12.5px; font-weight: 700; }
+  .why { margin-top: 11px; border: 1px dashed rgba(251,146,60,.35); border-radius: 13px; padding: 10px 12px; }
+  .why .h { font-size: 12px; font-weight: 700; color: var(--peach-ink); display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .why p { font-size: 12.5px; line-height: 1.5; color: var(--ink2); }
+  .why p b { color: var(--brand); }
+  .breakdown-toggle { margin-top: 9px; width: 100%; text-align: left; background: none; border: 1px solid var(--line); border-radius: 11px; padding: 8px 11px; font-size: 12px; color: var(--blue-ink); cursor: pointer; display: flex; align-items: center; gap: 7px; }
+  .bars { display: none; grid-template-columns: 96px 1fr 52px; gap: 5px 8px; align-items: center; margin-top: 9px; }
+  .bars.open { display: grid; }
+  .bar-l { font-size: 10.5px; color: var(--muted); }
+  .bar-t { height: 6px; border-radius: 4px; background: rgba(148,163,184,.18); overflow: hidden; }
+  .bar-f { height: 100%; border-radius: 4px; background: var(--score); }
+  .bar-n { font-size: 10px; color: var(--muted); text-align: right; }
+  .cta-row { display: flex; gap: 9px; margin-top: 12px; }
+  .btn-primary { flex: 1; background: linear-gradient(135deg, #38bdf8, #2563eb); color: white; border: none; border-radius: 14px; padding: 13px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 12px 18px rgba(37,99,235,.25); }
+  .btn-primary:active { background: #1d4ed8; }
+  .btn-ghost { width: 48px; border: 1px solid rgba(148,163,184,.18); background: rgba(15,23,42,.72); border-radius: 14px; font-size: 17px; cursor: pointer; color: var(--ink2); box-shadow: 0 6px 12px rgba(15,23,42,.18); }
+  .btn-ghost.saved { background: linear-gradient(135deg, rgba(251,146,60,.16), rgba(96,165,250,.14)); border-color: rgba(96,165,250,.18); }
+
+  /* Bottom nav */
+  .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(8,17,31,.94); border-top: 1px solid rgba(148,163,184,.12); backdrop-filter: blur(10px); display: flex; z-index: 30; box-shadow: 0 -12px 24px rgba(2,6,23,.28); }
+  .nav button { flex: 1; min-width: 0; background: none; border: none; padding: 9px 4px 11px; font-size: 10.5px; line-height: 1.2; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap; position: relative; }
+  .nav button .i { display: block; font-size: 18px; line-height: 1; }
+  .nav button.active { color: #ffffff; font-weight: 900; background: linear-gradient(180deg, rgba(59,130,246,.95), rgba(14,165,233,.82)); box-shadow: 0 -4px 18px rgba(34,211,238,.35), inset 0 1px 0 rgba(255,255,255,.32), inset 0 0 0 1px rgba(191,219,254,.24); border-radius: 12px 12px 0 0; transform: translateY(-1px); }
+  .nav button.active .i { filter: drop-shadow(0 0 12px rgba(255,255,255,.8)); }
+  .nav button.active::before { content: ""; position: absolute; inset: 4px 8px auto 8px; height: 2px; border-radius: 999px; background: rgba(255,255,255,.75); }
+
+  /* Màn chi tiết */
+  .detail-hero { position: relative; height: 210px; display: flex; align-items: flex-end; background: linear-gradient(160deg, #8a6a4f, #5d4632 70%); }
+  .detail-hero .emoji-bg { position: absolute; right: 16px; top: 20px; font-size: 70px; opacity: .35; }
+  .detail-hero h2 { position: relative; color: #fff; font-size: 21px; padding: 4px 16px 16px; text-shadow: 0 1px 8px rgba(0,0,0,.3); }
+  .detail-hero .loc { position: relative; color: rgba(255,255,255,.85); font-size: 11.5px; padding: 0 16px 6px; display: flex; gap: 5px; align-items: center; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 7px; padding: 12px 16px 0; }
+  .pill { font-size: 11.5px; border-radius: 999px; padding: 5px 11px; font-weight: 600; }
+  .pill.p { background: var(--peach); color: var(--peach-ink); }
+  .pill.o { background: var(--brand); color: #fff; }
+  .why-big { margin: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; }
+  .why-big .h { display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 800; margin-bottom: 9px; }
+  .why-big .mood-pill { display: inline-block; background: var(--peach); color: var(--peach-ink); border-radius: 999px; font-size: 11.5px; padding: 4px 10px; margin-bottom: 8px; }
+  .why-big p { font-size: 13px; line-height: 1.6; color: var(--ink2); }
+  .why-big p b { color: var(--brand); }
+  .gh { display: flex; justify-content: space-between; align-items: center; margin-top: 11px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 12px; color: var(--ink2); }
+  .gh .right { color: var(--muted); font-size: 11px; }
+  .back-btn { position: absolute; top: 12px; left: 12px; z-index: 5; width: 34px; height: 34px; border-radius: 50%; border: none; background: rgba(255,255,255,.92); font-size: 15px; cursor: pointer; }
+
+  /* Màn chẩn đoán (Bộ lọc) */
+  .diag-hero { margin: 12px 16px; background: linear-gradient(150deg, #f2734a, #d94f2b); border-radius: 20px; padding: 18px 16px; color: #fff; }
+  .diag-hero .kicker { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.18); border-radius: 999px; font-size: 10.5px; padding: 4px 10px; margin-bottom: 10px; }
+  .diag-hero h2 { font-size: 20px; line-height: 1.3; margin-bottom: 7px; }
+  .diag-hero p { font-size: 12.5px; opacity: .92; line-height: 1.5; }
+  .block-card { margin: 12px 16px 0; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+  .block-card .h { font-size: 12.5px; font-weight: 800; margin-bottom: 9px; display: flex; align-items: center; gap: 7px; }
+  .block-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink2); margin: 6px 0; }
+  .block-row .track { flex: 1; height: 7px; border-radius: 4px; background: rgba(148,163,184,.18); overflow: hidden; display: flex; }
+  .block-row .fill { height: 100%; background: var(--brand); }
+  .block-row .fill.rest { background: #f2b26b; }
+  .block-row .who { color: var(--brand); font-weight: 700; }
+  .relax-card { margin: 12px 16px 0; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; }
+  .relax-card .h { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; font-weight: 800; }
+  .relax-card .h .note { font-size: 10.5px; color: var(--muted); font-weight: 400; }
+  .relax-item { display: flex; gap: 11px; margin-top: 13px; }
+  .relax-item .ic { width: 38px; height: 38px; border-radius: 12px; background: var(--blue); display: grid; place-items: center; font-size: 17px; flex: none; }
+  .relax-item .t { font-size: 13.5px; font-weight: 700; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .relax-item .unlock { font-size: 10.5px; background: var(--green); color: var(--green-ink); border-radius: 999px; padding: 2px 8px; font-weight: 700; }
+  .relax-item .d { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: 3px; }
+  .relax-item .act { margin-top: 8px; display: flex; justify-content: flex-end; }
+  .btn-apply { background: var(--brand); color: #fff; border: none; border-radius: 11px; padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  /* Form bộ lọc (màn Sửa điều kiện) */
+  .form-card { margin: 12px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 15px; }
+  .f-label { display: block; font-size: 12px; color: var(--ink2); margin: 11px 0 5px; font-weight: 600; }
+  .f-label:first-child { margin-top: 0; }
+  select, input[type=number] { width: 100%; padding: 9px 11px; border-radius: 11px; border: 1px solid rgba(148,163,184,.28); background: rgba(15, 23, 42, .92); color: var(--ink); font-size: 13.5px; }
+  select option { background: #0f172a; color: var(--ink); }
+  input::placeholder { color: var(--muted); opacity: 1; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .sld-row { display: grid; grid-template-columns: 92px 1fr 22px; gap: 8px; align-items: center; margin: 7px 0; }
+  .sld-row .l { font-size: 11.5px; color: var(--ink2); }
+  .sld-row .v { font-size: 12px; font-weight: 800; color: var(--brand); text-align: right; }
+  input[type=range] { width: 100%; accent-color: var(--brand); }
+  .sw-row { display: flex; gap: 7px; }
+  .sw { flex: 1; text-align: center; padding: 8px 4px; border-radius: 11px; border: 1px solid rgba(148,163,184,.2); background: rgba(15,23,42,.85); font-size: 12px; color: var(--ink2); cursor: pointer; }
+  .sw.on { background: var(--peach); border-color: var(--peach-ink); color: var(--peach-ink); font-weight: 700; }
+
+  /* Màn đã lưu */
+  .empty-note { margin: 30px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .toast { position: fixed; bottom: 86px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; border: 1px solid rgba(148,163,184,.25); font-size: 12.5px; border-radius: 999px; padding: 9px 18px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 40; }
+  .toast.show { opacity: .95; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <!-- ===== MÀN 1: GỢI Ý ===== -->
+  <div id="view-suggest" class="view active">
+    <div class="hdr">
+      <div class="logo"><div class="ic">🧭</div><div><h1>Weekend Planner</h1><div class="sub">Gợi ý hoạt động cuối tuần</div></div></div>
+      <div class="btns"><button class="icon-btn" onclick="switchView('filters')">⚙️</button><button class="icon-btn avatar">👤</button></div>
+    </div>
+    <div class="cond-card">
+      <div class="cond-head"><span class="t">Tâm trạng đang chọn:</span><button class="edit" onclick="switchView('filters')">✏️ Sửa điều kiện (<span id="condCount">7/7</span>)</button></div>
+      <span class="chip-mood" id="moodChip">…</span>
+      <div class="chips" id="condChips"></div>
+      <div class="status-row" id="statusRow"></div>
+    </div>
+    <div id="results"></div>
+  </div>
+
+  <!-- ===== MÀN 2: CHI TIẾT ĐIỂM ĐẾN ===== -->
+  <div id="view-detail" class="view">
+    <div id="detailBody"></div>
+  </div>
+
+  <!-- ===== MÀN 3: BỘ LỌC + CHẨN ĐOÁN ===== -->
+  <div id="view-filters" class="view">
+    <div class="hdr"><div class="logo"><div class="ic">🧭</div><div><h1>Weekend Planner</h1><div class="sub">Điều kiện & chẩn đoán</div></div></div></div>
+    <div id="diagArea"></div>
+    <div class="form-card" id="filterForm"></div>
+    <div style="height:16px"></div>
+  </div>
+
+  <!-- ===== MÀN 4: ĐÃ CHỐT ===== -->
+  <div id="view-planned" class="view">
+    <div class="hdr"><div class="logo"><div class="ic">🧭</div><div><h1>Đã chốt</h1><div class="sub">Lựa chọn cuối cùng của bạn</div></div></div></div>
+    <div id="plannedBody"></div>
+  </div>
+
+  <!-- ===== MÀN 5: ĐÃ LƯU ===== -->
+  <div id="view-saved" class="view">
+    <div class="hdr"><div class="logo"><div class="ic">🧭</div><div><h1>Đã lưu</h1><div class="sub">Danh sách yêu thích của bạn</div></div></div></div>
+    <div id="savedBody"></div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="nav">
+    <button id="nav-suggest" class="active" onclick="switchView('suggest')"><span class="i">✨</span>Gợi ý</button>
+    <button id="nav-planned" onclick="switchView('planned')"><span class="i">✅</span>Đã chốt</button>
+    <button id="nav-saved" onclick="switchView('saved')"><span class="i">🤍</span>Đã lưu</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+<script>
+// ============================================================
+// DỮ LIỆU MẪU — Hoạt động cuối tuần (đơn vị tiền: nghìn đồng/người)
+// LƯU Ý: dữ liệu mô phỏng phục vụ bài học; giá/địa điểm cần thay bằng
+// số liệu tra thực tế và ghi nguồn vào docs/06 khi nộp chính thức.
+// Trường dữ liệu:
+//   id, name, category, emoji — định danh + hiển thị
+//   priceK (nghìn)            — chi phí đại diện 1 người (0 = miễn phí)
+//   priceRange [min,max]      — khoảng giá hiển thị (tuỳ chọn)
+//   hoursMin, hoursMax        — thời lượng phù hợp (giờ)
+//   venue                     — 'in' (trong nhà) | 'out' (ngoài trời) | 'both' (cả hai)
+//   energy                    — 1 nhẹ · 2 trung bình · 3 tốn sức
+//   social                    — một mình (1) · với bạn bè (2) · cả hai được (3)
+//   groupMin, groupMax        — quy mô nhóm phù hợp
+//   location                  — địa điểm (mô phỏng)
+//   bestHours                 — khung giờ tốt nhất: sang | chieu | toi
+//   goldenHour                — chuỗi khung giờ vàng hiển thị (tuỳ chọn)
+//   tags, moodFit, crowdLevel — như trước; moodFit có thêm mức 'stress'
+// ============================================================
+
+const CATALOG = [
+  { id: "ca-phe-sach-ho",     name: "Cà phê sách & dạo bộ hồ hoàng hôn", category: "Thư giãn & Văn hoá", emoji: "☕", priceK: 60, priceRange: [45, 80], hoursMin: 2.5, hoursMax: 3.5, venue: "both", energy: 1, social: 3, groupMin: 1, groupMax: 3, location: "Bờ Hồ Tây & Đường Láng Yên, Hà Nội", bestHours: "chieu", goldenHour: "16:45 – 17:45", tags: ["thugian", "vanhoa"], crowdLevel: 1,
+    moodFit: { thoaimai: 88, happy: 65, buon: 85, chan: 70, stress: 95 } },
+  { id: "ngu-trua",          name: "Ngủ bù cả buổi",              category: "Nghỉ ngơi",      emoji: "🛏️", priceK: 0,   hoursMin: 2,  hoursMax: 5,  venue: "in",  energy: 1, social: 1, bestHours: "chieu", tags: ["nghingoi", "om"], crowdLevel: 1, moodFit: { thoaimai: 90, happy: 40, buon: 80, chan: 85 } },
+  { id: "xem-phim-nha",      name: "Xem phim ở nhà",              category: "Nghỉ ngơi",      emoji: "🎬", priceK: 60,  hoursMin: 2,  hoursMax: 4,  venue: "in",  energy: 1, social: 3, bestHours: "toi", tags: ["nghingoi", "giaitri"], crowdLevel: 1, moodFit: { thoaimai: 85, happy: 75, buon: 75, chan: 80 } },
+  { id: "doc-sach-cafe",     name: "Đọc sách ở cafe",             category: "Nghỉ ngơi",      emoji: "📚", priceK: 80,  hoursMin: 1,  hoursMax: 3,  venue: "in",  energy: 1, social: 1, bestHours: "sang", tags: ["nghingoi", "chantoi"], crowdLevel: 2, moodFit: { thoaimai: 80, happy: 55, buon: 70, chan: 75 } },
+  { id: "cafe-choi-ban",     name: "Cà phê trò chuyện",           category: "Xã giao",        emoji: "☕", priceK: 70,  hoursMin: 1,  hoursMax: 3,  venue: "in",  energy: 2, social: 2, bestHours: "chieu", tags: ["xagiao", "chantoi"], crowdLevel: 2, moodFit: { thoaimai: 65, happy: 80, buon: 65, chan: 70 } },
+  { id: "an-quan-moi",       name: "Săn quán ăn mới",             category: "Ẩm thực",        emoji: "🍜", priceK: 150, hoursMin: 1,  hoursMax: 3,  venue: "in",  energy: 2, social: 3, bestHours: "chieu", tags: ["amthuc", "chantoi", "xagiao"], crowdLevel: 3, moodFit: { thoaimai: 70, happy: 90, buon: 60, chan: 80 } },
+  { id: "bbai-bien",         name: "Đi biển",                     category: "Ngoài trời",     emoji: "🌊", priceK: 300, hoursMin: 4,  hoursMax: 8,  venue: "out", energy: 3, social: 3, bestHours: "sang", tags: ["dungoai", "happy"], crowdLevel: 3, moodFit: { thoaimai: 70, happy: 95, buon: 70, chan: 60 } },
+  { id: "leo-nui",           name: "Trekking / leo núi",          category: "Ngoài trời",     emoji: "⛰️", priceK: 250, hoursMin: 5,  hoursMax: 10, venue: "out", energy: 3, social: 2, bestHours: "sang", tags: ["dungoai", "thethao"], crowdLevel: 2, moodFit: { thoaimai: 50, happy: 85, buon: 55, chan: 75 } },
+  { id: "dap-xe",            name: "Đạp xe công viên",            category: "Thể thao",       emoji: "🚲", priceK: 20,  hoursMin: 1,  hoursMax: 3,  venue: "out", energy: 3, social: 3, bestHours: "sang", tags: ["thethao", "dungoai"], crowdLevel: 2, moodFit: { thoaimai: 60, happy: 80, buon: 60, chan: 70 } },
+  { id: "bong-da",           name: "Đá bóng với nhóm bạn",        category: "Thể thao",       emoji: "⚽", priceK: 50,  hoursMin: 2,  hoursMax: 3,  venue: "out", energy: 3, social: 2, bestHours: "chieu", tags: ["thethao", "xagiao"], crowdLevel: 2, moodFit: { thoaimai: 45, happy: 90, buon: 50, chan: 65 } },
+  { id: "gym",               name: "Tập gym / yoga",              category: "Thể thao",       emoji: "🏋️", priceK: 80,  hoursMin: 1,  hoursMax: 2,  venue: "in",  energy: 3, social: 1, bestHours: "sang", tags: ["thethao", "chantoi"], crowdLevel: 2, moodFit: { thoaimai: 55, happy: 70, buon: 75, chan: 70 } },
+  { id: "cho-dem",           name: "Chợ đêm / phố đi bộ",         category: "Xã giao",        emoji: "🏮", priceK: 200, hoursMin: 2,  hoursMax: 4,  venue: "out", energy: 2, social: 2, bestHours: "toi", tags: ["xagiao", "amthuc", "giaitri"], crowdLevel: 3, moodFit: { thoaimai: 65, happy: 85, buon: 60, chan: 75 } },
+  { id: "karaoke",           name: "Karaoke với bạn",             category: "Giải trí",       emoji: "🎤", priceK: 150, hoursMin: 2,  hoursMax: 4,  venue: "in",  energy: 2, social: 2, bestHours: "toi", tags: ["giaitri", "xagiao"], crowdLevel: 3, moodFit: { thoaimai: 55, happy: 90, buon: 55, chan: 70 } },
+  { id: "board-game",        name: "Board game café",             category: "Giải trí",       emoji: "🎲", priceK: 100, hoursMin: 2,  hoursMax: 4,  venue: "in",  energy: 2, social: 2, bestHours: "chieu", tags: ["giaitri", "xagiao", "chantoi"], crowdLevel: 2, moodFit: { thoaimai: 65, happy: 80, buon: 70, chan: 75 } },
+  { id: "bao-tang",          name: "Bảo tàng / triển lãm",        category: "Văn hoá",        emoji: "🏛️", priceK: 60,  hoursMin: 2,  hoursMax: 3,  venue: "in",  energy: 2, social: 3, bestHours: "sang", tags: ["vanhoa", "chantoi"], crowdLevel: 2, moodFit: { thoaimai: 60, happy: 60, buon: 75, chan: 70 } },
+  { id: "hoc-moi",           name: "Lớp học nấu ăn / vẽ",         category: "Văn hoá",        emoji: "🎨", priceK: 250, hoursMin: 2,  hoursMax: 3,  venue: "in",  energy: 2, social: 3, bestHours: "chieu", tags: ["vanhoa", "chantoi", "kinhnghiem"], crowdLevel: 2, moodFit: { thoaimai: 50, happy: 75, buon: 70, chan: 85 } },
+  { id: "tram-chieu",        name: "Trà chiều + ngắm phố",        category: "Cafe & Chill",   emoji: "🫖", priceK: 100, hoursMin: 1.5, hoursMax: 3, venue: "in", energy: 1, social: 2, groupMin: 2, groupMax: 4, location: "Café ven kênh & khu phố cổ", bestHours: "chieu", tags: ["thugian", "xagiao"], crowdLevel: 2, moodFit: { thoaimai: 86, happy: 78, buon: 84, chan: 74, stress: 90 } },
+  { id: "lam-banh",          name: "Lớp làm bánh & uống trà",     category: "Workshop",       emoji: "🍰", priceK: 200, hoursMin: 2, hoursMax: 4, venue: "in", energy: 2, social: 2, groupMin: 2, groupMax: 6, location: "Workshop Hà Nội & Kim Mã", bestHours: "chieu", tags: ["vanhoa", "xagiao"], crowdLevel: 2, moodFit: { thoaimai: 72, happy: 82, buon: 68, chan: 74, stress: 70 } },
+  { id: "ve-tranh",          name: "Vẽ tranh + nghe nhạc chill",  category: "Sáng tạo",      emoji: "🎨", priceK: 140, hoursMin: 2, hoursMax: 4, venue: "in", energy: 1, social: 1, groupMin: 1, groupMax: 2, location: "Studio vẽ & quán cafe góc phố", bestHours: "chieu", tags: ["thugian", "vanhoa"], crowdLevel: 1, moodFit: { thoaimai: 88, happy: 72, buon: 80, chan: 77, stress: 89 } },
+  { id: "rap-phim",          name: "Xem phim chiếu rạp",          category: "Giải trí",       emoji: "🎟️", priceK: 120, hoursMin: 2, hoursMax: 3, venue: "in", energy: 1, social: 3, groupMin: 1, groupMax: 4, location: "Rạp phim gần khu bạn sống", bestHours: "toi", tags: ["giaitri", "thugian"], crowdLevel: 2, moodFit: { thoaimai: 82, happy: 80, buon: 76, chan: 78, stress: 86 } },
+  { id: "nau-nha",           name: "Bếp nhóm ở nhà",              category: "Ẩm thực",        emoji: "🍲", priceK: 180, hoursMin: 2, hoursMax: 4, venue: "in", energy: 2, social: 3, groupMin: 3, groupMax: 8, location: "Nhà bạn & bếp chung", bestHours: "toi", tags: ["amthuc", "xagiao"], crowdLevel: 2, moodFit: { thoaimai: 68, happy: 88, buon: 62, chan: 72, stress: 80 } },
+  { id: "doc-sach-thu-gian", name: "Đọc sách + uống trà",       category: "Nghỉ ngơi",      emoji: "📖", priceK: 90, hoursMin: 1.5, hoursMax: 3, venue: "in", energy: 1, social: 1, groupMin: 1, groupMax: 2, location: "Quán sách & cafe nhỏ", bestHours: "sang", tags: ["nghingoi", "thugian"], crowdLevel: 1, moodFit: { thoaimai: 90, happy: 60, buon: 82, chan: 81, stress: 93 } },
+  { id: "don-nha",           name: "Dọn nhà + sắp lại góc học tập", category: "Việc nhà",     emoji: "🧹", priceK: 0,   hoursMin: 2,  hoursMax: 4,  venue: "in",  energy: 3, social: 1, bestHours: "sang", tags: ["vinhanga", "chantoi"], crowdLevel: 1, moodFit: { thoaimai: 40, happy: 45, buon: 60, chan: 80 } },
+  { id: "du-lich-gan",       name: "Du lịch gần 1 ngày",          category: "Ngoài trời",     emoji: "🚗", priceK: 600, hoursMin: 8,  hoursMax: 12, venue: "out", energy: 3, social: 3, bestHours: "sang", tags: ["dungoai", "kinhnghiem", "xagiao"], crowdLevel: 3, moodFit: { thoaimai: 60, happy: 90, buon: 65, chan: 70 } }
+];
+
+// Điền giá trị mặc định nhất quán (không khai báo rõ ở từng mẫu):
+// - moodFit.stress ≈ tổng hợp "thoải mái" + "hơi buồn" (trừ khi khai báo sẵn)
+// - groupMin/groupMax theo hình thức đi
+for (const it of CATALOG) {
+  if (it.moodFit.stress == null) {
+    it.moodFit.stress = Math.round(it.moodFit.thoaimai * 0.5 + it.moodFit.buon * 0.5);
+  }
+  if (it.groupMin == null) {
+    const g = { 1: [1, 2], 2: [2, 8], 3: [1, 8] }[it.social];
+    it.groupMin = g[0]; it.groupMax = g[1];
+  }
+  if (it.priceRange == null) it.priceRange = [it.priceK, it.priceK];
+}
+
+// Địa điểm mô phỏng (điền sau khi đã có name/location riêng cho mẫu flagship)
+const MOCK_LOCATIONS = {
+  "ngu-trua": "Tại nhà bạn", "xem-phim-nha": "Tại nhà bạn", "doc-sach-cafe": "Phố_BOOK & Nguyễn Xí, Hà Nội",
+  "cafe-choi-ban": "Quang Trung & Trịnh Hoài Đức", "an-quan-moi": "Khu Ẩm thực Hoàng Quốc Việt", "bbai-bien": "Bãi tắm đông, Đồ Sơn / Sầm Sơn",
+  "leo-nui": "Núi Trầm & Tân Triều", "dap-xe": "Công viên hồ Tây & đường和 sustainability", "bong-da": "Sân Goaly Nam An & Mỹ Đình",
+  "gym": "Phòng tập quanh khu bạn ở", "cho-dem": "Phố đi bộ Hồ Gươm & chợ đêm", "karaoke": "Karaok-quanh Đại học Bách Khoa",
+  "board-game": "Board Game Cafe Xa Đàn", "bao-tang": "Bảo tàng Hà Nội & VCCA", "hoc-moi": "Workshop phố твор Trúc Bạch",
+  "don-nha": "Tại nhà bạn", "du-lich-gan": "Tam Cốc – Tràng An / đồi chè Mộc Châu"
+};
+for (const it of CATALOG) {
+  if (!it.location) it.location = MOCK_LOCATIONS[it.id] || "Quanh khu vực bạn ở";
+}
+
+// Dùng cho cả Node (kiểm thử) và trình duyệt (giao diện)
+if (typeof module === "object" && module.exports) {
+  module.exports = { CATALOG };
+} else {
+  window.CATALOG_DATA = { CATALOG };
+}
+
+</script>
+<script>
+// ============================================================
+// LÕI CÔNG CỤ GỢI Ý HOẠT ĐỘNG CUỐI TUẦN — NHIỀU ĐIỀU KIỆN
+// Pipeline: LỌC CỬNG (ngân sách → thời gian rảnh → trong/ngoài trời →
+//           mức năng lượng → hình thức đi → quy mô nhóm)
+//         → CHẤM ĐIỂM (mood, budget, time, energy, crowd)
+//         → GỘP TRỌNG SỐ (chuẩn hoá về 1) → XẾP HẠNG
+//         → GIẢI THÍCH + CHẨN ĐOÁN + GỢI Ý NỚI LỎNG (relaxations)
+// Hàm thuần (pure function): cùng input → cùng output, dễ kiểm thử.
+// ============================================================
+
+const MOODS = ["thoaimai", "happy", "buon", "chan", "stress"];
+const MOOD_LABELS = { thoaimai: "Thoải mái", happy: "Vui vẻ", buon: "Hơi buồn", chan: "Chán đổi gió", stress: "Cần xả stress" };
+
+// NGƯỠNG "HỢP" thật sự: moodFit >= 80 mới tính hợp tâm trạng (docs/01 D7)
+const MOOD_FIT_THRESHOLD = 80;
+
+// Trọng số mặc định (tổng = 1): tâm trạng định hướng cuộc chơi cuối tuần
+const DEFAULT_WEIGHTS = { mood: 0.30, budget: 0.25, time: 0.25, energy: 0.10, crowd: 0.10 };
+
+const COMPONENT_LABELS = {
+  mood: "Hợp tâm trạng", budget: "Hợp túi tiền", time: "Hợp thời gian rảnh",
+  energy: "Hợp mức năng lượng", crowd: "Hợp mức đông/vắng"
+};
+
+// Hằng số gợi ý nới lỏng: bước tăng điều kiện khi không có kết quả
+const RELAX_BUDGET_STEP = 50;   // +50k mỗi bước
+const RELAX_HOURS_STEP = 2.5;   // +2.5h mỗi bước
+
+function clamp(x, lo, hi) { return Math.min(hi, Math.max(lo, x)); }
+
+// venue: 'in' | 'out' | 'both' — 'both' luôn qua bộ lọc trong/ngoài trời
+function venueMatches(item, wantIndoor) {
+  if (wantIndoor == null || item.venue === "both") return true;
+  return wantIndoor ? item.venue === "in" : item.venue === "out";
+}
+
+// Ước lượng điểm thời gian 0–100 (chấm mềm theo docs/01 D5)
+function timeScore(item, freeHours) {
+  if (freeHours == null) return 50;
+  if (freeHours < item.hoursMin) return 0;
+  if (freeHours >= item.hoursMax) return 100;
+  const span = Math.max(item.hoursMax - item.hoursMin, 0.5);
+  return clamp(60 + 40 * ((freeHours - item.hoursMin) / span), 0, 100);
+}
+
+function computeComponents(item, prefs) {
+  let budget;
+  if (prefs.budget == null) budget = 60;
+  else if (item.priceK === 0) budget = 100;
+  else if (item.priceK <= prefs.budget) budget = clamp(100 - (item.priceK / prefs.budget) * 50, 50, 100);
+  else budget = 0;
+
+  const time = timeScore(item, prefs.freeHours);
+
+  const want = prefs.energy ?? 2;
+  const diff = Math.abs(item.energy - want);
+  const energy = diff === 0 ? 100 : diff === 1 ? 60 : 20;
+
+  const mood = item.moodFit?.[prefs.mood] ?? 50;
+
+  const wantCrowd = prefs.crowd ?? 2;
+  const cd = Math.abs(item.crowdLevel - wantCrowd);
+  const crowd = cd === 0 ? 100 : cd === 1 ? 65 : 30;
+
+  return { mood, budget, time, energy, crowd };
+}
+
+function resolveWeights(weights) {
+  let w = {
+    mood: Number(weights?.mood) || 0,
+    budget: Number(weights?.budget) || 0,
+    time: Number(weights?.time) || 0,
+    energy: Number(weights?.energy) || 0,
+    crowd: Number(weights?.crowd) || 0
+  };
+  const sum = Object.values(w).reduce((a, b) => a + b, 0);
+  if (!(sum > 0)) w = { ...DEFAULT_WEIGHTS };
+  const total = Object.values(w).reduce((a, b) => a + b, 0);
+  const norm = {};
+  for (const k of Object.keys(w)) norm[k] = w[k] / total;
+  return { norm, usedDefault: !(sum > 0) };
+}
+
+function buildReasons(item, comps, prefs) {
+  const reasons = [];
+  if (comps.mood >= MOOD_FIT_THRESHOLD) reasons.push(`Rất hợp tâm trạng "${MOOD_LABELS[prefs.mood]}" đang chọn (${comps.mood}/100)`);
+  if (item.priceK === 0) reasons.push("Miễn phí, không tốn đồng nào");
+  else if (comps.budget >= 70) reasons.push(`Chi phí ~${item.priceK}k/người — nằm gọn trong ngân sách`);
+  if (comps.time === 100 && prefs.freeHours != null) reasons.push(`Vừa khổ thời gian rảnh ${prefs.freeHours}h (cần ${item.hoursMin}–${item.hoursMax}h)`);
+  if (prefs.energy != null && Math.abs(item.energy - prefs.energy) === 0) reasons.push(item.energy === 3 ? "Đúng bài tốn sức — xả năng lượng hết mình" : item.energy === 1 ? "Nhẹ nhàng, không cần sức lực" : "Vừa sức, không quá mệt");
+  if (item.venue === "both") reasons.push("Linh hoạt cả trong nhà lẫn ngoài trời — không lo thời tiết");
+  else if (prefs.indoor != null && (prefs.indoor ? item.venue === "in" : item.venue === "out")) reasons.push(item.venue === "in" ? "Trong nhà, không lo thời tiết" : "Ngoài trời, hít khí trời");
+  if (prefs.crowd != null && item.crowdLevel === prefs.crowd && prefs.crowd === 1) reasons.push("Vắng người, yên tĩnh");
+  if (prefs.social === "friends" && (item.social === 2 || item.social === 3)) reasons.push("Phù hợp đi cùng nhóm bạn");
+  if (prefs.social === "alone" && (item.social === 1 || item.social === 3)) reasons.push("Đi một mình vẫn thoải mái");
+  if (prefs.groupSize != null && item.groupMax >= prefs.groupSize) reasons.push(`Chứ được nhóm ${item.groupMin}–${item.groupMax} người`);
+  if (prefs.freeHours != null && comps.time === 0) reasons.push("▼ Đánh đổi: cần nhiều thời gian hơn bạn đang có");
+  if (prefs.budget != null && item.priceK > prefs.budget) reasons.push(`▼ Đánh đổi: vượt ngân sách (${item.priceK}k > ${prefs.budget}k)`);
+  if (comps.mood < MOOD_FIT_THRESHOLD) reasons.push(`▼ Đánh đổi: chưa thật sự hợp tâm trạng "${MOOD_LABELS[prefs.mood]}" (chỉ ${comps.mood}/100)`);
+  if (reasons.length === 0) reasons.push("Cân bằng ở mức trung bình trên mọi tiêu chí");
+  return reasons.slice(0, 4);
+}
+
+/**
+ * recommend(catalog, prefs) → { results, eliminated, remaining, total, fallback, matched }
+ * prefs: { mood, budget, freeHours, indoor, energy, social, crowd, groupSize, weights }
+ *   indoor: true (trong nhà) | false (ngoài trời) | null (tuỳ)
+ *   social: 'alone' | 'friends' | 'anyone'
+ */
+function recommend(catalog, prefs) {
+  const SOCIAL_NUM = { alone: 1, friends: 2, anyone: null };
+  const socialNum = prefs.social == null ? null : (SOCIAL_NUM[prefs.social] ?? null);
+  const wantVenue = prefs.indoor == null ? null : (prefs.indoor === "true" ? true : prefs.indoor === "false" ? false : prefs.indoor);
+
+  // Bộ lọc cứng tuần tự, ghi số loại từng tầng (chẩn đoán BR-4)
+  const filters = [
+    { key: "budget",  label: "Ngân sách",     test: (it) => prefs.budget == null || it.priceK <= prefs.budget },
+    { key: "freeHours", label: "Thời gian rảnh", test: (it) => prefs.freeHours == null || it.hoursMin <= prefs.freeHours },
+    { key: "indoor",  label: "Trong/ngoài trời", test: (it) => venueMatches(it, wantVenue) },
+    { key: "energy",  label: "Mức năng lượng", test: (it) => prefs.energy == null || Math.abs(it.energy - prefs.energy) <= 1 },
+    { key: "social",  label: "Hình thức đi",  test: (it) => socialNum == null || it.social === 3 || it.social === socialNum },
+    { key: "groupSize", label: "Quy mô nhóm", test: (it) => prefs.groupSize == null || (it.groupMax >= prefs.groupSize && it.groupMin <= prefs.groupSize) }
+  ];
+
+  let pool = catalog.slice();
+  const eliminated = filters.map((f) => {
+    const before = pool.length;
+    pool = pool.filter((it) => f.test(it));
+    return { key: f.key, label: f.label, count: before - pool.length };
+  });
+
+  const { norm: weights } = resolveWeights(prefs.weights || {});
+
+  const results = pool
+    .map((item) => {
+      const comps = computeComponents(item, prefs);
+      const score = Object.keys(weights).reduce((s, k) => s + weights[k] * comps[k], 0);
+      return {
+        item,
+        score: Math.round(score * 100) / 100,
+        breakdown: { comps, weights },
+        reasons: buildReasons(item, comps, prefs)
+      };
+    })
+    .sort((a, b) =>
+      b.score - a.score ||
+      a.item.priceK - b.item.priceK ||
+      a.item.name.localeCompare(b.item.name)
+    );
+
+  const anyMood = pool.some((it) => (it.moodFit?.[prefs.mood] ?? 50) >= MOOD_FIT_THRESHOLD);
+  const fallback = pool.length > 0 && !anyMood;
+  const matched = results.filter((x) => (x.item.moodFit?.[prefs.mood] ?? 50) >= MOOD_FIT_THRESHOLD).length;
+  return { results, eliminated, remaining: pool.length, total: catalog.length, fallback, matched };
+}
+
+// ------------------------------------------------------------
+// CHẨN ĐOÁN + GỢI Ý NỚI LỎNG (BR-4) — hàm thuần, test được
+// Đầu vào: catalog + prefs hiện tại (không có/khó có kết quả).
+// Đầu ra: { topBlocks: [ {label, count} ], relaxations: [ {
+//   field, title, subtitle, detail, unlock, nextPrefs } ] }
+// Mỗi phương án nới lỏng đều kèm nextPrefs — bấm là áp dụng được ngay.
+// ------------------------------------------------------------
+function suggestRelaxations(catalog, prefs) {
+  const wantVenue = prefs.indoor == null ? null : (prefs.indoor === "true" ? true : prefs.indoor === "false" ? false : prefs.indoor);
+  const base = recommend(catalog, prefs);
+  const topBlocks = [...base.eliminated].sort((a, b) => b.count - a.count).slice(0, 2);
+
+  const out = [];
+  const mk = (field, value, title, subtitle, detail, unlock) => ({
+    field, title, subtitle, detail, unlock, nextPrefs: { ...prefs, [field]: value }
+  });
+
+  // Tính mức tăng TỐI THIỂU thật: duyệt các mức giá có trong dữ liệu (tăng dần),
+  // chọn mức nhỏ nhất mở khoá thêm lựa chọn — đúng thông điệp "mức tăng tối thiểu".
+  if (prefs.budget != null) {
+    const levels = [...new Set(catalog.map((it) => it.priceK))].filter((v) => v > prefs.budget).sort((a, b) => a - b);
+    for (const lv of levels) {
+      const r = recommend(catalog, { ...prefs, budget: lv });
+      if (r.remaining > base.remaining) {
+        out.push(mk("budget", lv,
+          `Tăng ngân sách lên ${lv}k`,
+          lv - prefs.budget <= 50 ? "Đủ cho set trà đồ hoặc board game ấm cúng trong nhà" : "Mở thêm nhóm ngoài trời, di chuyển xa hơn",
+          `Điều kiện 「Ngân sách ≤ ${prefs.budget}k」 đang chặn nhiều lựa chọn nhất`, `+${r.remaining - base.remaining} chỗ`));
+        break;
+      }
+    }
+  }
+
+  // Tương tự với thời gian: mức nhỏ nhất trong dữ liệu mở thêm lựa chọn
+  if (prefs.freeHours != null && out.length < 2) {
+    const levels = [...new Set(catalog.map((it) => it.hoursMin))].filter((v) => v > prefs.freeHours).sort((a, b) => a - b);
+    for (const lv of levels) {
+      const r = recommend(catalog, { ...prefs, freeHours: lv });
+      if (r.remaining > base.remaining) {
+        out.push(mk("freeHours", lv,
+          `Nới thời gian lên ${lv} tiếng`,
+          "Tranh thủ thêm 1 buổi, đủ trọn vẹn một trải nghiệm dài không lo vội",
+          `Điều kiện 「Thời gian rảnh ≥ ${prefs.freeHours}h」 đang chặn`, `+${r.remaining - base.remaining} chỗ`));
+        break;
+      }
+    }
+  }
+
+  if (prefs.energy != null && prefs.energy < 2 && out.length < 2) {
+    const r = recommend(catalog, { ...prefs, energy: null });
+    if (r.remaining > base.remaining) {
+      out.push(mk("energy", null,
+        "Bỏ giới hạn năng lượng",
+        "Kể cả hoạt động tốn sức — cơ thể sẽ tự biết giới hạn",
+        "Bộ lọc năng lượng đang thu hẹppool đáng kể", `+${r.remaining - base.remaining} chỗ`));
+    }
+  }
+
+  if (wantVenue != null && out.length < 2) {
+    const r = recommend(catalog, { ...prefs, indoor: null });
+    if (r.remaining > base.remaining) {
+      out.push(mk("indoor", null,
+        wantVenue === true ? "Cho phép cả ngoài trời" : "Cho phép cả trong nhà",
+        "Không khí ngày mai có thể đổi — linh hoạt hơn",
+        "Bộ lọc trong/ngoài trời đang loại nhiều lựa chọn", `+${r.remaining - base.remaining} chỗ`));
+    }
+  }
+
+  return { topBlocks, relaxations: out.slice(0, 2), base };
+}
+
+// Xuất cho cả Node và trình duyệt
+if (typeof module === "object" && module.exports) {
+  module.exports = { recommend, computeComponents, timeScore, resolveWeights, suggestRelaxations, DEFAULT_WEIGHTS, COMPONENT_LABELS, MOODS, MOOD_LABELS, MOOD_FIT_THRESHOLD, RELAX_BUDGET_STEP, RELAX_HOURS_STEP };
+} else {
+  window.RECOMMENDER = { recommend, computeComponents, timeScore, resolveWeights, suggestRelaxations, DEFAULT_WEIGHTS, COMPONENT_LABELS, MOODS, MOOD_LABELS, MOOD_FIT_THRESHOLD, RELAX_BUDGET_STEP, RELAX_HOURS_STEP };
+}
+
+</script>
+<script>
+// ============================================================
+// GIAO DIỆN SPA 4 MÀN — theo thiết kế Stitch (Weekend Planner)
+// M1 Gợi ý (điều kiện + thẻ xếp hạng) · M2 Chi tiết điểm đến
+// M3 Bộ lọc + Chẩn đoán thông minh + Presets · M4 Đã lưu
+// Logic chấm điểm nằm 100% ở recommender.js.
+// ============================================================
+
+const $ = (id) => document.getElementById(id);
+let currentPrefs = { mood: "stress", budget: 150, freeHours: 3, indoor: null, energy: 1, social: "friends", crowd: 1, groupSize: 2 };
+let lastRun = null;
+let planned = null;
+const saved = new Set();
+const MOOD_EMOJI = { thoaimai: "😌", happy: "😄", buon: "🌧️", chan: "😐", stress: "🧖" };
+const VENUE_TXT = { in: "Trong nhà", out: "Ngoài trời", both: "Trong & Ngoài trời" };
+const ENERGY_TXT = { 1: "Nhẹ", 2: "Vừa sức", 3: "Tốn sức" };
+const SOCIAL_TXT = { alone: "Một mình", friends: "Cùng bạn", anyone: "Tuỳ" };
+
+function readPrefsFromUI() {
+  const num = (id) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : null; };
+  const sel = (id) => { const v = $(id).value; if (v === "") return null; if (v === "true") return true; if (v === "false") return false; return v; };
+  const companion = $("f-companion").value;
+  let social = "anyone";
+  let groupSize = null;
+  if (companion === "alone") { social = "alone"; groupSize = 1; }
+  else if (companion === "pair") { social = "friends"; groupSize = 2; }
+  else if (companion === "small") { social = "friends"; groupSize = 4; }
+  else if (companion === "big") { social = "friends"; groupSize = 8; }
+  else if (companion === "friends") { social = "friends"; groupSize = null; }
+  else if (companion === "anyone") { social = "anyone"; groupSize = null; }
+
+  return {
+    mood: $("f-mood").value,
+    budget: num("f-budget"),
+    freeHours: num("f-freeHours"),
+    indoor: sel("f-indoor"),
+    energy: currentPrefs.energy ?? null,
+    social,
+    crowd: sel("f-crowd"),
+    groupSize,
+    weights: currentPrefs.weights || {
+      mood: 2, budget: 2, time: 2, energy: 2, crowd: 2
+    }
+  };
+}
+
+function runAndRender() {
+  lastRun = RECOMMENDER.recommend(window.CATALOG_DATA.CATALOG, currentPrefs);
+  renderSuggest();
+}
+
+// ---------- MÀN 1: GỢI Ý ----------
+function renderSuggest() {
+  const r = lastRun;
+  $("moodChip").textContent = `${MOOD_EMOJI[currentPrefs.mood]} ${RECOMMENDER.MOOD_LABELS[currentPrefs.mood]}, bình yên`;
+  const chips = [];
+  if (currentPrefs.budget != null) chips.push(`💰 ≤ ${currentPrefs.budget}k`);
+  if (currentPrefs.freeHours != null) chips.push(`⏱️ ${currentPrefs.freeHours} giờ`);
+  if (currentPrefs.indoor != null) chips.push(currentPrefs.indoor ? "🏠 Trong nhà" : "🌤️ Ngoài trời");
+  if (currentPrefs.energy != null) chips.push(`⚡ ${ENERGY_TXT[currentPrefs.energy]}`);
+  if (currentPrefs.social) chips.push(`👥 ${SOCIAL_TXT[currentPrefs.social]}${currentPrefs.groupSize ? ` (${currentPrefs.groupSize} người)` : ""}`);
+  if (currentPrefs.crowd != null) chips.push(currentPrefs.crowd === 1 ? "🌿 Yên tĩnh" : currentPrefs.crowd === 3 ? "🎆 Sầm uất" : "🙂 Vừa phải");
+  $("condChips").innerHTML = chips.map((c) => `<span class="chip">${c}</span>`).join("");
+  $("condCount").textContent = `${chips.length + 1}/7`;
+
+  const hasAny = r.results.length > 0;
+  if (!hasAny) {
+    $("statusRow").innerHTML = `<span class="dot b"></span> Chưa có lịch trình khớp 100% — <b style="color:var(--brand);cursor:pointer" onclick="renderDiag();switchView('filters')">xem chẩn đoán →</b>`;
+  } else if (r.matched === 0) {
+    $("statusRow").innerHTML = `<span class="dot b"></span> <span style="color:var(--peach-ink)">⚠ Không hoạt động nào thật sự hợp tâm trạng — dưới đây là gần nhất</span> · <b style="color:var(--brand);cursor:pointer" onclick="renderDiag();switchView('filters')">nới lỏng →</b>`;
+  } else {
+    $("statusRow").innerHTML = `<span class="dot g"></span> Tìm thấy <b>${r.matched}/${r.total}</b> hoạt động hợp · <span class="right">✓ 100% Khớp ràng buộc</span>`;
+  }
+
+  const box = $("results");
+  if (!hasAny) {
+    box.innerHTML = `<div class="res-card" style="padding:18px;text-align:center">
+      <div style="font-size:34px">🌙</div>
+      <div style="font-weight:800;margin:8px 0 4px">Chưa có hoạt động thoả toàn bộ điều kiện</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.5">Bộ lọc đang gắt nhất: <b>${[...r.eliminated].sort((a,b)=>b.count-a.count)[0].label}</b>.
+      </div>
+      <button class="btn-primary" style="margin-top:12px" onclick="renderDiag();switchView('filters')">✨ Xem chẩn đoán & nới lỏng</button>
+    </div>`;
+    return;
+  }
+
+  const badges = ["#1 Phù hợp nhất", "#2 Lựa chọn sáng tạo", "#3 Ý tưởng bất ngờ", "#4 Đáng cân nhắc", "#5 Dự phòng"];
+  box.innerHTML = r.results.slice(0, 5).map((x, i) => {
+    const it = x.item;
+    const pr = it.priceRange[0] === it.priceRange[1] ? `${it.priceK}k` : `${it.priceRange[0]}k – ${it.priceRange[1]}k (Rẻ)`;
+    const reasonsHtml = x.reasons.filter(s => !s.startsWith("▼")).map((s) => s.replace(/(moodFit \d+\/100)/, "<b>$1</b>")).join(" ");
+    const mainReason = reasonsHtml || "Cân bằng tốt trên mọi tiêu chí bạn chọn.";
+    return `
+    <div class="res-card">
+      <div class="hero ${i === 0 ? "" : "small"}">
+        <div class="emoji-bg">${it.emoji}</div>
+        ${i === 0 ? `<span class="rank-badge">⭐ ${badges[i]}</span>` : `<span class="rank-badge">${badges[i]}</span>`}
+        <span class="score-badge"><div class="n">${Math.round(x.score)}</div><div class="d">/100</div></span>
+        <div class="cat">${it.category.toUpperCase()}</div>
+        <h2>${it.name}</h2>
+      </div>
+      <div class="res-body">
+        <div class="meta-chips">
+          <span class="mchip b">🏠 ${VENUE_TXT[it.venue]}</span>
+          <span class="mchip p">👥 ${it.groupMin}–${it.groupMax} người</span>
+          <span class="mchip g">⚡ ${ENERGY_TXT[it.energy]}</span>
+          <span class="mchip y">🌿 ${it.crowdLevel === 1 ? "Yên tĩnh" : it.crowdLevel === 2 ? "Vừa phải" : "Đông"}</span>
+        </div>
+        <div class="info-grid">
+          <div class="info"><div class="ic r">💸</div><div><div class="l">Chi phí / người</div><div class="v">${pr}</div></div></div>
+          <div class="info"><div class="ic b">🕐</div><div><div class="l">Thời lượng</div><div class="v">${it.hoursMin} – ${it.hoursMax} giờ</div></div></div>
+        </div>
+        <div class="why">
+          <div class="h">✦ Lý do vì sao hợp bạn nhất (BR-2)</div>
+          <p>${mainReason}</p>
+        </div>
+        <button class="breakdown-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.querySelector('.arr').textContent = this.nextElementSibling.classList.contains('open') ? '▴' : '▾'">📊 Xem công thức điểm số (${Math.round(x.score)}/100) <span class="arr" style="margin-left:auto">▾</span></button>
+        <div class="bars">${Object.keys(x.breakdown.comps).map((k) => `
+          <div class="bar-l">${RECOMMENDER.COMPONENT_LABELS[k]}</div>
+          <div class="bar-t"><div class="bar-f" style="width:${Math.round(x.breakdown.comps[k])}%"></div></div>
+          <div class="bar-n">${Math.round(x.breakdown.comps[k])} × ${x.breakdown.weights[k].toFixed(2)}</div>`).join("")}
+        </div>
+        <div class="cta-row">
+          <button class="btn-primary" onclick="choosePlan('${it.id}')">✓ Chốt hoạt động này</button>
+          <button class="btn-ghost ${saved.has(it.id) ? "saved" : ""}" onclick="toggleSave('${it.id}', this)">${saved.has(it.id) ? "🔖" : "🔖"}</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function choosePlan(id) {
+  const it = window.CATALOG_DATA.CATALOG.find((a) => a.id === id);
+  if (!it) return;
+  planned = { id: it.id, name: it.name, location: it.location, priceK: it.priceK, hoursMin: it.hoursMin, hoursMax: it.hoursMax };
+  renderPlanned();
+  switchView("planned");
+  toast(`Đã chốt: ${it.name} ✓`);
+}
+
+// ---------- MÀN 2: CHI TIẾT ----------
+function openDetail(id) {
+  const x = lastRun.results.find((r) => r.item.id === id);
+  if (!x) return;
+  const it = x.item;
+  const pr = it.priceRange[0] === it.priceRange[1] ? `${it.priceK}k` : `${it.priceRange[0]}k – ${it.priceRange[1]}k`;
+  const moodScore = it.moodFit[currentPrefs.mood] ?? 50;
+  const gh = it.goldenHour || `${it.bestHours === "sang" ? "6:00 – 9:00" : it.bestHours === "chieu" ? "15:00 – 17:30" : "18:00 – 21:00"}`;
+  $("detailBody").innerHTML = `
+    <div class="detail-hero">
+      <button class="back-btn" onclick="switchView('suggest')">‹</button>
+      <div class="emoji-bg">${it.emoji}</div>
+      <div class="loc">📍 ${it.location}</div>
+      <h2>${it.name}</h2>
+    </div>
+    <div class="tag-row">
+      <span class="pill p">${it.category}</span>
+      <span class="pill o">⭐ Top #1 Match · ${Math.round(x.score)}/100</span>
+    </div>
+    <div class="res-body" style="padding:12px 16px">
+      <div class="info-grid">
+        <div class="info"><div class="ic r">💸</div><div><div class="l">Chi phí / người</div><div class="v">${pr}${it.priceRange[0] !== it.priceRange[1] ? " (Rẻ)" : ""}</div></div></div>
+        <div class="info"><div class="ic b">🕐</div><div><div class="l">Thời lượng</div><div class="v">${it.hoursMin} – ${it.hoursMax} giờ</div></div></div>
+        <div class="info"><div class="ic b">⚡</div><div><div class="l">Mức năng lượng</div><div class="v">${ENERGY_TXT[it.energy]}</div></div></div>
+        <div class="info"><div class="ic r">👥</div><div><div class="l">Quy mô nhóm</div><div class="v">${it.groupMin} – ${it.groupMax} người</div></div></div>
+      </div>
+    </div>
+    <div class="why-big">
+      <div class="h">🙋 Tại sao hoạt động này dành cho bạn?</div>
+      <span class="mood-pill">Khớp tâm trạng: "${RECOMMENDER.MOOD_LABELS[currentPrefs.mood]}"</span>
+      <p>Bạn đang chọn tâm trạng <b>"${RECOMMENDER.MOOD_LABELS[currentPrefs.mood]}"</b>. ${it.name} cho phép bạn nối lại kết nối, không gian yên tĩnh giúp hồi phục sau tuần làm việc, giảm bớt áp lực trước màn hình máy tính. Điểm hợp tâm trạng <b>${moodScore}/100</b> — ${moodScore >= RECOMMENDER.MOOD_FIT_THRESHOLD ? "đạt ngưỡng hợp thật sự." : "chưa cao, cân nhắc thêm lựa chọn khác."}</p>
+      <div class="gh"><span>🕒 Khung giờ vàng: <b>${gh}</b></span><span class="right">Tận bộ mà mệt</span></div>
+    </div>
+    <div class="cta-row" style="padding:0 16px">
+      <button class="btn-primary" onclick="choosePlan('${id}')">✓ Chốt kế hoạch này!</button>
+      <button class="btn-ghost ${saved.has(id) ? "saved" : ""}" onclick="toggleSave('${id}', this)">🔖</button>
+    </div>
+    <div style="height:20px"></div>`;
+  switchView("detail");
+}
+
+// ---------- MÀN 3: CHẨN ĐOÁN + BỘ LỌC ----------
+function renderDiag() {
+  const r = lastRun;
+  if (r.results.length > 0) {
+    $("diagArea").innerHTML = `<div class="block-card"><div class="h">✅ Điều kiện hiện tại đang khớp</div>
+      <div style="font-size:12.5px;color:var(--ink2);line-height:1.55">Tìm thấy <b>${r.matched}/${r.total}</b> hoạt động thật sự hợp tâm trạng, <b>${r.remaining}</b> hoạt động thoả ràng buộc cứng. Có thể quay lại tab Gợi ý để xem xếp hạng.</div></div>`;
+  } else {
+    const diag = RECOMMENDER.suggestRelaxations(window.CATALOG_DATA.CATALOG, currentPrefs);
+    const total = r.total;
+    const rows = diag.topBlocks.map((b, i) => {
+      const pct = Math.round((b.count / total) * 100);
+      return `<div class="block-row">${i === 0 ? `<span class="who">${b.label}: loại ${b.count}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div>` : `<div class="track"><div class="fill rest" style="width:${pct}%"></div></div><span>${b.label}: ${b.count}</span>`}</div>`;
+    }).join("");
+    $("diagArea").innerHTML = `
+      <div class="diag-hero">
+        <span class="kicker">🧠 Chẩn đoán thông minh (BR-4)</span>
+        <h2>Chưa tìm thấy lịch trình khớp 100%</h2>
+        <p>Hiện tại không có hoạt động nào thỏa mãn toàn bộ <b>${Object.keys(currentPrefs).filter(k => currentPrefs[k] != null && k !== "weights" && k !== "mood").length} điều kiện</b> cùng lúc. ${total} địa điểm bị chặn.</p>
+      </div>
+      <div class="block-card">
+        <div class="h">🚫 Bộ lọc loại nhiều nhất</div>
+        ${rows}
+      </div>
+      <div class="relax-card">
+        <div class="h">✨ Nới lỏng để mở khoá ngay <span class="note">Giải pháp tức thì</span></div>
+        ${diag.relaxations.map((rx, i) => `
+          <div class="relax-item">
+            <div class="ic">${i === 0 ? "💰" : "⏱️"}</div>
+            <div style="flex:1">
+              <div class="t">${rx.title} <span class="unlock">${rx.unlock}</span></div>
+              <div class="d">${rx.subtitle}</div>
+              <div class="d" style="color:var(--ink2)">Mức tăng tối thiểu cần thiết — ${rx.detail}</div>
+              <div class="act"><button class="btn-apply" onclick='applyRelax(${JSON.stringify(rx.nextPrefs).replace(/'/g, "&#39;")})'>Áp dụng ngay →</button></div>
+            </div>
+          </div>`).join("")}
+      </div>`;
+  }
+  renderFilterForm();
+}
+
+function renderFilterForm() {
+  const p = currentPrefs;
+  const companionValue = p.social === "alone" ? "alone" : p.social === "friends" && p.groupSize === 2 ? "pair" : p.social === "friends" && p.groupSize != null && p.groupSize <= 5 ? "small" : p.social === "friends" && p.groupSize != null && p.groupSize > 5 ? "big" : p.social === "friends" ? "friends" : "anyone";
+  $("filterForm").innerHTML = `
+    <label class="f-label" for="f-mood">Tâm trạng</label>
+    <select id="f-mood">${RECOMMENDER.MOODS.map((m) => `<option value="${m}" ${p.mood === m ? "selected" : ""}>${MOOD_EMOJI[m]} ${RECOMMENDER.MOOD_LABELS[m]}</option>`).join("")}</select>
+    <div class="grid2">
+      <div><label class="f-label" for="f-budget">Ngân sách (k)</label><input type="number" id="f-budget" value="${p.budget ?? ""}" min="0" step="10" placeholder="Tuỳ"></div>
+      <div><label class="f-label" for="f-freeHours">Thời gian (giờ)</label><input type="number" id="f-freeHours" value="${p.freeHours ?? ""}" min="0" step="0.5" placeholder="Tuỳ"></div>
+    </div>
+    <div class="grid2">
+      <div><label class="f-label" for="f-indoor">Nơi diễn ra</label>
+        <select id="f-indoor"><option value="" ${p.indoor == null ? "selected" : ""}>Tuỳ</option><option value="true" ${p.indoor === true ? "selected" : ""}>Trong nhà</option><option value="false" ${p.indoor === false ? "selected" : ""}>Ngoài trời</option></select></div>
+      <div><label class="f-label" for="f-crowd">Không khí</label>
+        <select id="f-crowd"><option value="" ${p.crowd == null ? "selected" : ""}>Tuỳ</option><option value="1" ${p.crowd == 1 ? "selected" : ""}>Yên tĩnh</option><option value="2" ${p.crowd == 2 ? "selected" : ""}>Vừa phải</option><option value="3" ${p.crowd == 3 ? "selected" : ""}>Sầm uất</option></select></div>
+    </div>
+    <div><label class="f-label" for="f-companion">Đi cùng ai / nhóm</label>
+      <select id="f-companion">
+        <option value="anyone" ${companionValue === "anyone" ? "selected" : ""}>Tuỳ ý</option>
+        <option value="alone" ${companionValue === "alone" ? "selected" : ""}>Một mình</option>
+        <option value="pair" ${companionValue === "pair" ? "selected" : ""}>2 người</option>
+        <option value="small" ${companionValue === "small" ? "selected" : ""}>3–5 người</option>
+        <option value="big" ${companionValue === "big" ? "selected" : ""}>6–8 người</option>
+        <option value="friends" ${companionValue === "friends" ? "selected" : ""}>Cùng bạn bè</option>
+      </select>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:12px" onclick="applyForm()">Áp dụng & xem gợi ý</button>`;
+}
+
+function applyForm() {
+  currentPrefs = readPrefsFromUI();
+  runAndRender();
+  renderDiag();
+  switchView("suggest");
+  toast("Đã cập nhật điều kiện ✓");
+}
+
+function applyRelax(nextPrefs) {
+  currentPrefs = nextPrefs;
+  runAndRender();
+  switchView("suggest");
+  toast("Đã nới lỏng điều kiện — có kết quả mới ✓");
+}
+
+// ---------- MÀN 4: ĐÃ LƯU ----------
+function toggleSave(id, btn) {
+  const it = window.CATALOG_DATA.CATALOG.find((a) => a.id === id);
+  if (saved.has(id)) { saved.delete(id); toast(`Đã bỏ lưu: ${it.name}`); }
+  else { saved.add(id); toast(`Đã lưu: ${it.name} 🔖`); }
+  renderSaved();
+  renderSuggest();
+}
+
+function renderSaved() {
+  const box = $("savedBody");
+  if (saved.size === 0) {
+    box.innerHTML = `<div class="empty-note">Chưa có hoạt động nào được lưu.<br>Bấm 🔖 trên mỗi thẻ gợi ý để thêm vào đây.</div>`;
+    return;
+  }
+  box.innerHTML = [...saved].map((id) => {
+    const it = window.CATALOG_DATA.CATALOG.find((a) => a.id === id);
+    return `<div class="res-card" style="padding:13px 14px;display:flex;gap:11px;align-items:center">
+      <div style="font-size:26px">${it.emoji}</div>
+      <div style="flex:1"><div style="font-weight:800;font-size:13.5px">${it.name}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${it.priceK === 0 ? "Miễn phí" : `~${it.priceK}k`} · ${it.hoursMin}–${it.hoursMax}h · ${VENUE_TXT[it.venue]}</div></div>
+      <button class="btn-ghost" onclick="toggleSave('${id}', this)">✕</button>
+    </div>`;
+  }).join("");
+}
+
+function renderPlanned() {
+  const box = $("plannedBody");
+  if (!planned) {
+    box.innerHTML = `<div class="empty-note">Bạn chưa chọn hoạt động nào.<br>Chốt một hoạt động từ màn hình gợi ý để xem lại ở đây.</div>`;
+    return;
+  }
+  const it = window.CATALOG_DATA.CATALOG.find((a) => a.id === planned.id);
+  if (!it) {
+    box.innerHTML = `<div class="empty-note">Hoạt động đã chốt không còn trong danh sách.</div>`;
+    return;
+  }
+  box.innerHTML = `
+    <div class="res-card" style="padding:14px">
+      <div style="font-size:36px;margin-bottom:8px">${it.emoji}</div>
+      <div style="font-weight:900;font-size:18px;margin-bottom:6px">${it.name}</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6">
+        <div>📍 ${it.location}</div>
+        <div>💸 ${it.priceK === 0 ? "Miễn phí" : `~${it.priceK}k / người`}</div>
+        <div>⏱️ ${it.hoursMin}–${it.hoursMax} giờ</div>
+        <div>🏠 ${VENUE_TXT[it.venue]}</div>
+      </div>
+      <div class="cta-row" style="margin-top:16px">
+        <button class="btn-primary" onclick="openDetail('${it.id}')">Xem chi tiết</button>
+        <button class="btn-ghost" onclick="toggleSave('${it.id}', this)">${saved.has(it.id) ? "🔖" : "🔖"}</button>
+      </div>
+    </div>`;
+}
+
+// ---------- Điều hướng ----------
+function switchView(name) {
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  $("view-" + name).classList.add("active");
+  document.querySelectorAll(".nav button").forEach((b) => b.classList.remove("active"));
+  const navMap = { suggest: "nav-suggest", planned: "nav-planned", saved: "nav-saved" };
+  if (navMap[name]) $(navMap[name]).classList.add("active");
+  window.scrollTo(0, 0);
+  if (name === "filters") renderDiag();
+  if (name === "saved") renderSaved();
+  if (name === "planned") renderPlanned();
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+// Khởi động
+runAndRender();
+
+</script>
+</body>
+</html>

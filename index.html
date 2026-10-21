@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekend Planner — Gợi ý hoạt động cuối tuần</title>
+<style>
+  :root {
+    color-scheme: dark; /* form control (select/option/spinner) render theo dark */
+    --bg: #07111f; --bg-2: #0d1a2d; --card: rgba(15, 23, 42, 0.76); --card-strong: #111d2f; --ink: #eaf2ff; --ink2: #bed0ef; --muted: #8ea7cc;
+    --peach: rgba(251, 146, 60, 0.12); --peach-ink: #fdba74; --blue: rgba(96, 165, 250, 0.12); --blue-ink: #93c5fd;
+    --green: rgba(34,197,94,0.12); --green-ink: #86efac; --yellow: rgba(250,204,21,0.12); --yellow-ink: #fcd34d;
+    --line: rgba(148,163,184,.18); --brand: #60a5fa; --brand-dark: #3b82f6; --score: #f59e0b; --shadow: 0 24px 50px rgba(2, 6, 23, .42);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; background: radial-gradient(circle at top, #10213b 0%, #081421 35%, #050d17 100%); color: var(--ink); }
+  .phone {
+    max-width: 430px; margin: 0 auto; min-height: 100vh; background: linear-gradient(180deg, rgba(13,26,45,1) 0%, rgba(8,17,31,1) 100%);
+    position: relative; padding-bottom: 76px; box-shadow: inset 0 0 0 1px rgba(148,163,184,0.08);
+  }
+  .phone::before {
+    content: ""; position: absolute; inset: 0; background:
+      radial-gradient(circle at top right, rgba(96, 165, 250, 0.18), transparent 24%),
+      radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.12), transparent 18%);
+    pointer-events: none;
+  }
+  .pad { padding: 14px 16px; }
+
+  /* Header */
+  .hdr { display: flex; align-items: center; justify-content: space-between; padding: 18px 16px 10px; position: relative; z-index: 1; }
+  .hdr .logo { display: flex; align-items: center; gap: 10px; }
+  .hdr .logo .ic { width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, #38bdf8, #2563eb); color: #fff; display: grid; place-items: center; font-size: 18px; box-shadow: 0 14px 20px rgba(96,165,250,.35); }
+  .hdr h1 { font-size: 17px; letter-spacing: -0.2px; font-weight: 800; }
+  .hdr .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .hdr .btns { display: flex; gap: 8px; }
+  .icon-btn { width: 36px; height: 36px; border-radius: 12px; border: 1px solid rgba(148,163,184,.14); background: rgba(15,23,42,.7); color: var(--ink2); font-size: 15px; cursor: pointer; box-shadow: 0 8px 14px rgba(2,6,23,.25); }
+  .avatar { background: linear-gradient(135deg, #38bdf8, #2563eb); color: #fff; border: none; box-shadow: 0 12px 18px rgba(37,99,235,.32); }
+
+  /* Chips điều kiện đang chọn */
+  .cond-card { margin: 10px 16px; background: rgba(15,23,42,.8); border: 1px solid rgba(96,165,250,.12); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); position: relative; z-index: 1; }
+  .cond-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+  .cond-head .t { font-size: 12.5px; color: var(--ink2); }
+  .cond-head .edit { font-size: 12px; color: var(--brand); font-weight: 700; cursor: pointer; background: none; border: none; }
+  .chip-mood { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(96,165,250,.18), rgba(14,165,233,.12)); color: var(--blue-ink); font-size: 13px; font-weight: 700; border-radius: 999px; padding: 6px 12px; border: 1px solid rgba(96,165,250,.16); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--ink2); background: rgba(15,23,42,.9); border: 1px solid rgba(148,163,184,.16); border-radius: 999px; padding: 5px 10px; }
+  .status-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--ink2); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot.g { background: #35c48d; } .dot.b { background: var(--brand); }
+  .status-row .right { margin-left: auto; color: var(--green-ink); font-weight: 600; }
+
+  /* View switching */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Cards kết quả */
+  .rank-badge { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,.92); color: #0f172a; font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 5px 10px; display: flex; align-items: center; gap: 4px; }
+  .score-badge { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.92); border-radius: 12px; padding: 4px 9px; text-align: center; }
+  .score-badge .n { font-size: 17px; font-weight: 800; color: var(--score); }
+  .score-badge .d { font-size: 9.5px; color: rgba(15,23,42,.75); }
+  .res-card { margin: 12px 16px; background: linear-gradient(180deg, rgba(15,23,42,.9), rgba(15,23,42,.8)); border: 1px solid rgba(96,165,250,.1); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); }
+  .hero { position: relative; height: 190px; display: flex; align-items: flex-end; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 42%, #38bdf8 100%); }
+  .hero.small { height: 120px; }
+  .hero .emoji-bg { position: absolute; right: 14px; top: 18px; font-size: 64px; opacity: .18; filter: saturate(1.2); }
+  .hero .cat { position: relative; color: rgba(255,255,255,.88); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; padding: 0 14px; }
+  .hero h2 { position: relative; color: #fff; font-size: 19px; line-height: 1.25; padding: 2px 14px 14px; text-shadow: 0 2px 12px rgba(13,18,32,.18); }
+  .res-body { padding: 12px 14px 14px; }
+  .meta-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mchip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; border-radius: 999px; padding: 5px 10px; }
+  .mchip.b { background: var(--blue); color: var(--blue-ink); }
+  .mchip.g { background: var(--green); color: var(--green-ink); }
+  .mchip.p { background: var(--peach); color: var(--peach-ink); }
+  .mchip.y { background: var(--yellow); color: var(--yellow-ink); }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 11px; }
+  .info { display: flex; gap: 9px; align-items: center; background: rgba(15, 23, 42, .85); border: 1px solid rgba(148,163,184,.14); border-radius: 13px; padding: 9px 11px; }
+  .info .ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 14px; flex: none; }
+  .info .ic.r { background: rgba(251, 146, 60, .15); } .info .ic.b { background: var(--blue); }
+  .info .l { font-size: 10.5px; color: var(--muted); }
+  .info .v { font-size: 12.5px; font-weight: 700; }
+  .why { margin-top: 11px; border: 1px dashed rgba(251,146,60,.35); border-radius: 13px; padding: 10px 12px; }
+  .why .h { font-size: 12px; font-weight: 700; color: var(--peach-ink); display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .why p { font-size: 12.5px; line-height: 1.5; color: var(--ink2); }
+  .why p b { color: var(--brand); }
+  .breakdown-toggle { margin-top: 9px; width: 100%; text-align: left; background: none; border: 1px solid var(--line); border-radius: 11px; padding: 8px 11px; font-size: 12px; color: var(--blue-ink); cursor: pointer; display: flex; align-items: center; gap: 7px; }
+  .bars { display: none; grid-template-columns: 96px 1fr 52px; gap: 5px 8px; align-items: center; margin-top: 9px; }
+  .bars.open { display: grid; }
+  .bar-l { font-size: 10.5px; color: var(--muted); }
+  .bar-t { height: 6px; border-radius: 4px; background: rgba(148,163,184,.18); overflow: hidden; }
+  .bar-f { height: 100%; border-radius: 4px; background: var(--score); }
+  .bar-n { font-size: 10px; color: var(--muted); text-align: right; }
+  .cta-row { display: flex; gap: 9px; margin-top: 12px; }
+  .btn-primary { flex: 1; background: linear-gradient(135deg, #38bdf8, #2563eb); color: white; border: none; border-radius: 14px; padding: 13px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 12px 18px rgba(37,99,235,.25); }
+  .btn-primary:active { background: #1d4ed8; }
+  .btn-ghost { width: 48px; border: 1px solid rgba(148,163,184,.18); background: rgba(15,23,42,.72); border-radius: 14px; font-size: 17px; cursor: pointer; color: var(--ink2); box-shadow: 0 6px 12px rgba(15,23,42,.18); }
+  .btn-ghost.saved { background: linear-gradient(135deg, rgba(251,146,60,.16), rgba(96,165,250,.14)); border-color: rgba(96,165,250,.18); }
+
+  /* Bottom nav */
+  .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(8,17,31,.94); border-top: 1px solid rgba(148,163,184,.12); backdrop-filter: blur(10px); display: flex; z-index: 30; box-shadow: 0 -12px 24px rgba(2,6,23,.28); }
+  .nav button { flex: 1; min-width: 0; background: none; border: none; padding: 9px 4px 11px; font-size: 10.5px; line-height: 1.2; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap; position: relative; }
+  .nav button .i { display: block; font-size: 18px; line-height: 1; }
+  .nav button.active { color: #ffffff; font-weight: 900; background: linear-gradient(180deg, rgba(59,130,246,.95), rgba(14,165,233,.82)); box-shadow: 0 -4px 18px rgba(34,211,238,.35), inset 0 1px 0 rgba(255,255,255,.32), inset 0 0 0 1px rgba(191,219,254,.24); border-radius: 12px 12px 0 0; transform: translateY(-1px); }
+  .nav button.active .i { filter: drop-shadow(0 0 12px rgba(255,255,255,.8)); }
+  .nav button.active::before { content: ""; position: absolute; inset: 4px 8px auto 8px; height: 2px; border-radius: 999px; background: rgba(255,255,255,.75); }
+
+  /* Màn chi tiết */
+  .detail-hero { position: relative; height: 210px; display: flex; align-items: flex-end; background: linear-gradient(160deg, #8a6a4f, #5d4632 70%); }
+  .detail-hero .emoji-bg { position: absolute; right: 16px; top: 20px; font-size: 70px; opacity: .35; }
+  .detail-hero h2 { position: relative; color: #fff; font-size: 21px; padding: 4px 16px 16px; text-shadow: 0 1px 8px rgba(0,0,0,.3); }
+  .detail-hero .loc { position: relative; color: rgba(255,255,255,.85); font-size: 11.5px; padding: 0 16px 6px; display: flex; gap: 5px; align-items: center; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 7px; padding: 12px 16px 0; }
+  .pill { font-size: 11.5px; border-radius: 999px; padding: 5px 11px; font-weight: 600; }
+  .pill.p { background: var(--peach); color: var(--peach-ink); }
+  .pill.o { background: var(--brand); color: #fff; }
+  .why-big { margin: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; }
+  .why-big .h { display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 800; margin-bottom: 9px; }
+  .why-big .mood-pill { display: inline-block; background: var(--peach); color: var(--peach-ink); border-radius: 999px; font-size: 11.5px; padding: 4px 10px; margin-bottom: 8px; }
+  .why-big p { font-size: 13px; line-height: 1.6; color: var(--ink2); }
+  .why-big p b { color: var(--brand); }
+  .gh { display: flex; justify-content: space-between; align-items: center; margin-top: 11px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 12px; color: var(--ink2); }
+  .gh .right { color: var(--muted); font-size: 11px; }
+  .back-btn { position: absolute; top: 12px; left: 12px; z-index: 5; width: 34px; height: 34px; border-radius: 50%; border: none; background: rgba(255,255,255,.92); font-size: 15px; cursor: pointer; }
+
+  /* Màn chẩn đoán (Bộ lọc) */
+  .diag-hero { margin: 12px 16px; background: linear-gradient(150deg, #f2734a, #d94f2b); border-radius: 20px; padding: 18px 16px; color: #fff; }
+  .diag-hero .kicker { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.18); border-radius: 999px; font-size: 10.5px; padding: 4px 10px; margin-bottom: 10px; }
+  .diag-hero h2 { font-size: 20px; line-height: 1.3; margin-bottom: 7px; }
+  .diag-hero p { font-size: 12.5px; opacity: .92; line-height: 1.5; }
+  .block-card { margin: 12px 16px 0; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+  .block-card .h { font-size: 12.5px; font-weight: 800; margin-bottom: 9px; display: flex; align-items: center; gap: 7px; }
+  .block-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink2); margin: 6px 0; }
+  .block-row .track { flex: 1; height: 7px; border-radius: 4px; background: rgba(148,163,184,.18); overflow: hidden; display: flex; }
+  .block-row .fill { height: 100%; background: var(--brand); }
+  .block-row .fill.rest { background: #f2b26b; }
+  .block-row .who { color: var(--brand); font-weight: 700; }
+  .relax-card { margin: 12px 16px 0; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; }
+  .relax-card .h { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; font-weight: 800; }
+  .relax-card .h .note { font-size: 10.5px; color: var(--muted); font-weight: 400; }
+  .relax-item { display: flex; gap: 11px; margin-top: 13px; }
+  .relax-item .ic { width: 38px; height: 38px; border-radius: 12px; background: var(--blue); display: grid; place-items: center; font-size: 17px; flex: none; }
+  .relax-item .t { font-size: 13.5px; font-weight: 700; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .relax-item .unlock { font-size: 10.5px; background: var(--green); color: var(--green-ink); border-radius: 999px; padding: 2px 8px; font-weight: 700; }
+  .relax-item .d { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: 3px; }
+  .relax-item .act { margin-top: 8px; display: flex; justify-content: flex-end; }
+  .btn-apply { background: var(--brand); color: #fff; border: none; border-radius: 11px; padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  /* Form bộ lọc (màn Sửa điều kiện) */
+  .form-card { margin: 12px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 15px; }
+  .f-label { display: block; font-size: 12px; color: var(--ink2); margin: 11px 0 5px; font-weight: 600; }
+  .f-label:first-child { margin-top: 0; }
+  select, input[type=number] { width: 100%; padding: 9px 11px; border-radius: 11px; border: 1px solid rgba(148,163,184,.28); background: rgba(15, 23, 42, .92); color: var(--ink); font-size: 13.5px; }
+  select option { background: #0f172a; color: var(--ink); }
+  input::placeholder { color: var(--muted); opacity: 1; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .sld-row { display: grid; grid-template-columns: 92px 1fr 22px; gap: 8px; align-items: center; margin: 7px 0; }
+  .sld-row .l { font-size: 11.5px; color: var(--ink2); }
+  .sld-row .v { font-size: 12px; font-weight: 800; color: var(--brand); text-align: right; }
+  input[type=range] { width: 100%; accent-color: var(--brand); }
+  .sw-row { display: flex; gap: 7px; }
+  .sw { flex: 1; text-align: center; padding: 8px 4px; border-radius: 11px; border: 1px solid rgba(148,163,184,.2); background: rgba(15,23,42,.85); font-size: 12px; color: var(--ink2); cursor: pointer; }
+  .sw.on { background: var(--peach); border-color: var(--peach-ink); color: var(--peach-ink); font-weight: 700; }
+
+  /* Màn đã lưu */
+  .empty-note { margin: 30px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .toast { position: fixed; bottom: 86px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; border: 1px solid rgba(148,163,184,.25); font-size: 12.5px; border-radius: 999px; padding: 9px 18px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 40; }
+  .toast.show { opacity: .95; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <!-- ===== MÀN 1: GỢI Ý ===== -->
+  <div id="view-suggest" class="view active">
+    <div class="hdr">
+      <div class="logo"><div class="ic">🧭</div><div><h1>Weekend Planner</h1><div class="sub">Gợi ý hoạt động cuối tuần</div></div></div>
+      <div class="btns"><button class="icon-btn" onclick="switchView('filters')">⚙️</button><button class="icon-btn avatar">👤</button></div>
+    </div>
+    <div class="cond-card">
+      <div class="cond-head"><span class="t">Tâm trạng đang chọn:</span><button class="edit" onclick="switchView('filters')">✏️ Sửa điều kiện (<span id="condCount">7/7</span>)</button></div>
+      <span class="chip-mood" id="moodChip">…</span>
+      <div class="chips" id="condChips"></div>
+      <div class="status-row" id="statusRow"></div>
+    </div>
+    <div id="results"></div>
+  </div>
+
+  <!-- ===== MÀN 2: CHI TIẾT ĐIỂM ĐẾN ===== -->
+  <div id="view-detail" class="view">
+    <div id="detailBody"></div>
+  </div>
+
+  <!-- ===== MÀN 3: BỘ LỌC + CHẨN ĐOÁN ===== -->
+  <div id="view-filters" class="view">
+    <div class="hdr"><div class="logo"><div class="ic">🧭</div><div><h1>Weekend Planner</h1><div class="sub">Điều kiện & chẩn đoán</div></div></div></div>
+    <div id="diagArea"></div>
+    <div class="form-card" id="filterForm"></div>
+    <div style="height:16px"></div>
+  </div>
+
+  <!-- ===== MÀN 4: ĐÃ CHỐT ===== -->
+  <div id="view-planned" class="view">
+    <div class="hdr"><div class="logo"><div class="ic">🧭</div><div><h1>Đã chốt</h1><div class="sub">Lựa chọn cuối cùng của bạn</div></div></div></div>
+    <div id="plannedBody"></div>
+  </div>
+
+  <!-- ===== MÀN 5: ĐÃ LƯU ===== -->
+  <div id="view-saved" class="view">
+    <div class="hdr"><div class="logo"><div class="ic">🧭</div><div><h1>Đã lưu</h1><div class="sub">Danh sách yêu thích của bạn</div></div></div></div>
+    <div id="savedBody"></div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="nav">
+    <button id="nav-suggest" class="active" onclick="switchView('suggest')"><span class="i">✨</span>Gợi ý</button>
+    <button id="nav-planned" onclick="switchView('planned')"><span class="i">✅</span>Đã chốt</button>
+    <button id="nav-saved" onclick="switchView('saved')"><span class="i">🤍</span>Đã lưu</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+<script src="data.js"></script>
+<script src="recommender.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

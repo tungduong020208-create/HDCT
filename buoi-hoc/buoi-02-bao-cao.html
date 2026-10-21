@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Báo cáo Buổi 2 — Điều gì làm lựa chọn thay đổi? · Chọn tiêu chí</title>
+<style>
+  :root { --bg:#0f1420; --panel:#171e2e; --line:#2a3550; --text:#e8edf7; --muted:#8fa0bf; --accent:#4f8cff; --good:#35c48d; --warn:#f5b942; --bad:#f26d6d; --violet:#a78bfa; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.55; }
+  .wrap { max-width:960px; margin:0 auto; padding:28px 18px 70px; }
+  h1 { font-size:24px; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:13.5px; margin-bottom:24px; }
+  h2 { font-size:16px; margin:34px 0 10px; border-left:4px solid var(--accent); padding-left:10px; }
+  h2.violet { border-color:var(--violet); }
+  .quote { background:var(--panel); border:1px dashed var(--line); border-radius:12px; padding:14px 16px; font-size:13px; color:var(--muted); white-space:pre-wrap; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; background:var(--panel); border-radius:12px; overflow:hidden; }
+  th,td { padding:9px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  th { background:#1d2639; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  tr:last-child td { border-bottom:0; }
+  code { background:#1d2639; border-radius:5px; padding:1px 6px; font-size:12.5px; color:#9cc3ff; }
+  .ok { color:var(--good); font-weight:700; }
+  .todo { color:var(--warn); font-weight:700; }
+  .hi { color:var(--accent); font-weight:700; }
+  .arrow { color:var(--violet); font-weight:800; font-size:15px; }
+  .note { font-size:12.5px; color:var(--muted); margin-top:8px; }
+  .pill { display:inline-block; background:#1d2639; border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:12px; color:var(--muted); margin:2px 3px 2px 0; }
+  .k { color:var(--violet); font-weight:700; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-top:6px; }
+  .stat { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .stat .num { font-size:24px; font-weight:800; color:var(--accent); }
+  .stat .num.ok { color:var(--good); }
+  .stat .num.v { color:var(--violet); }
+  .stat .lbl { font-size:12.5px; color:var(--muted); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-top:12px; font-size:13.5px; }
+  .card b.v { color:var(--violet); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Báo cáo Buổi 2 — Điều gì làm lựa chọn thay đổi? · Chọn tiêu chí</h1>
+  <div class="sub">Nội dung buổi 2 → nghiên cứu tư liệu → đối chiếu với app gợi ý cuối tuần (buổi 1) · ngày 26/09/2026</div>
+
+  <h2>1 · Nội dung buổi 2 (nguyên văn bạn gửi)</h2>
+  <div class="quote">dựa trên cái buổi 1 tôi học và đây là cái nôi dung bài 2 đưa ra bạn phải tìm kiếm và lên cái bảng cho tôi xem
+- Điều gì làm lựa chọn thay đổi?
+- Chọn tiêu chí.</div>
+
+  <h2>2 · Số liệu buổi 2</h2>
+  <div class="grid">
+    <div class="stat"><div class="num v">2</div><div class="lbl">câu hỏi lớn: điều gì làm lựa chọn thay đổi · chọn tiêu chí</div></div>
+    <div class="stat"><div class="num v">6</div><div class="lbl">nhóm yếu tố làm lựa chọn thay đổi (Bảng A)</div></div>
+    <div class="stat"><div class="num">5</div><div class="lbl">đặc điểm của tiêu chí tốt (Bảng B)</div></div>
+    <div class="stat"><div class="num ok">6</div><div class="lbl">thí nghiệm thật S0–S5 chạy trên lõi (Bảng C)</div></div>
+    <div class="stat"><div class="num ok">5/5</div><div class="lbl">tiêu chí hiện có đạt chuẩn "tiêu chí tốt"</div></div>
+    <div class="stat"><div class="num">18</div><div class="lbl">hoạt động dữ liệu dùng cho thí nghiệm</div></div>
+  </div>
+
+  <h2>3 · Bảng A — Điều gì làm lựa chọn thay đổi?</h2>
+  <table>
+    <tr><th>Nhóm yếu tố</th><th>Ví dụ (chọn chơi cuối tuần)</th><th>Trong app nằm ở đâu?</th></tr>
+    <tr><td><b>Nguồn lực</b> — tiền, thời gian</td><td>50k/1h chỉ còn đạp xe, đá bóng; 300k/6h mở gần hết danh mục</td><td>Bộ lọc cứng Ngân sách + Thời gian rảnh</td></tr>
+    <tr><td><b>Tình huống vật lý</b> — trời, khung giờ, địa điểm</td><td>Mưa → chọn hoạt động trong nhà / cả hai</td><td>Bộ lọc Trong/ngoài trời (venue in/out/both)</td></tr>
+    <tr><td><b>Xã hội</b> — đi với ai, nhóm mấy người</td><td>Đá bóng cần cả nhóm; đọc sách đi một mình vẫn ổn</td><td>Bộ lọc Hình thức đi + Quy mô nhóm</td></tr>
+    <tr><td><b>Trạng thái bên trong</b> — tâm trạng, năng lượng</td><td>"Vui vẻ" → đá bóng (90); "stress" → cà phê sách hồ Tây (95)</td><td>Lọc mềm năng lượng ±1 bậc + điểm mood trọng số 0.30</td></tr>
+    <tr><td><b>Giá trị cá nhân</b> — coi trọng cái gì hơn</td><td>"Miễn thoải mái" vs "phải hợp tâm trạng"</td><td>Slider trọng số người dùng đè trọng số mặc định</td></tr>
+    <tr><td><b>Đám đông</b> — muốn đông hay vắng</td><td>Chán đổi gió cần chỗ đông; stress cần vắng</td><td>Thành phần điểm crowd (crowdLevel)</td></tr>
+  </table>
+  <div class="note">Nguồn: OpenLearn (Open University) — Factors that influence decisions (người quyết định · tình huống · cơ hội/vấn đề · <b>tiêu chí quyết định</b>); Symonds Research — 6 yếu tố ảnh hưởng ra quyết định (loại quyết định, môi trường, đạo đức, cảm xúc, khác biệt cá nhân, rào cản); 1000minds — MCDA/MCDM: lựa chọn đổi khi đổi <b>alternatives</b> (pool bị lọc) · <b>criteria</b> · <b>weights</b> · <b>decision-maker</b> — khớp đúng 4 trong 6 nhóm trên.</div>
+
+  <h2>4 · Bảng B — "Chọn tiêu chí": tiêu chí tốt có 5 đặc điểm</h2>
+  <table>
+    <tr><th>#</th><th>Đặc điểm</th><th>Tiêu chí kém</th><th>Tiêu chí tốt (trong app)</th></tr>
+    <tr><td>1</td><td><b>Có liên quan mục tiêu</b></td><td>"Logo đẹp"</td><td>Hợp tâm trạng — tâm trạng định hướng việc chơi cuối tuần</td></tr>
+    <tr><td>2</td><td><b>Đo được, so sánh được</b></td><td>"Thú vị" (mỗi người hiểu một kiểu)</td><td>priceK · hoursMin–hoursMax · moodFit 0–100 · energy 1–3</td></tr>
+    <tr><td>3</td><td><b>Phân biệt được lựa chọn</b></td><td>"Có tên" (mọi hoạt động đều có)</td><td>crowdLevel: chợ đêm 3 vs đọc sách cafe 2</td></tr>
+    <tr><td>4</td><td><b>Không trùng lặp</b></td><td>Đếm "rẻ" 2 lần (giá + "tiết kiệm")</td><td>5 thành phần, mỗi cái một khía cạnh riêng</td></tr>
+    <tr><td>5</td><td><b>Có trọng số rõ</b></td><td>Trung bình cộng không trọng số</td><td>mood .30 · budget .25 · time .25 · energy .10 · crowd .10, chuẩn hoá về 1</td></tr>
+  </table>
+  <div class="note">Nguồn: 1000minds (MCDA/MCDM) — 4 thành phần mô hình (alternatives, criteria, weights, decision-makers); 5–8 tiêu chí là đủ cho đa số bài toán; trọng số tường minh giảm thiên kiến "chọn theo cảm tính"; weighted-sum là cách gộp phổ biến nhất — app đang dùng đúng mô hình này.</div>
+
+  <h2>5 · Bảng C — Bằng chứng: 6 thí nghiệm thật trên lõi (giữ gốc "vui vẻ + 300k + 6h", chỉ đổi 1 điều kiện)</h2>
+  <table>
+    <tr><th>Thí nghiệm</th><th>Pool còn lại</th><th>Top 3 sau khi đổi</th><th>Điều gì thay đổi lựa chọn?</th></tr>
+    <tr><td>S0 · Gốc</td><td>17/18</td><td>Cà phê trò chuyện (91.08) · Đá bóng (90.92) · Board game (89.83)</td><td>— mốc so sánh</td></tr>
+    <tr><td>S1 · Đổi tâm trạng → stress</td><td>17/18</td><td>Cà phê sách hồ Tây (88.50) · Ngủ bù (88.00) · Bảo tàng (87.90)</td><td class="hi">Top 3 thay đổi HOÀN TOÀN chỉ vì tâm trạng (trọng số 0.30)</td></tr>
+    <tr><td>S2 · Đổi tâm trạng → chán đổi gió</td><td>17/18</td><td>Bảo tàng (88.50) · Board game (88.33) · Cà phê trò chuyện (88.08)</td><td class="hi">Xếp hạng xáo trộn cả bảng</td></tr>
+    <tr><td>S3 · Hạ ngân sách → 50k</td><td><b>4/18</b></td><td>Đạp xe (85.00) · Đá bóng (80.50) · Dọn nhà (76.00)</td><td class="hi">Bộ lọc cứng siết gần hết pool</td></tr>
+    <tr><td>S4 · Hạ thời gian → 1h</td><td>5/18</td><td>Cà phê trò chuyện (81.08) · Đạp xe (79.17) · Săn quán ăn (77.25)</td><td class="hi">Siết tương tự ngân sách</td></tr>
+    <tr><td>S5 · Cố định trong nhà</td><td>12/18</td><td>Cà phê trò chuyện (91.08) · Board game (89.83) · Karaoke (87.25)</td><td>Lọc vị trí — top giữ gần nguyên, mất lựa chọn ngoài trời</td></tr>
+  </table>
+
+  <h2 class="violet">6 · Kết luận buổi 2 — 2 cơ chế làm lựa chọn thay đổi</h2>
+  <div class="card">
+    <b class="v">Cơ chế 1 — đổi "tập được phép":</b> điều kiện cứng thay đổi (tiền, giờ, trời, đi với ai) → cả một nhóm lựa chọn biến mất khỏi danh sách (S3: còn 4/18; S4: 5/18; S5: 12/18). <span class="arrow">→</span> trong app là <b>bộ lọc cứng</b>.<br><br>
+    <b class="v">Cơ chế 2 — đổi "thứ hạng trong tập":</b> tâm trạng và giá trị cá nhân thay đổi → cùng một tập lựa chọn nhưng thứ hạng đảo chiều (S1, S2: top 3 đổi hoàn toàn dù pool giữ 17/18). <span class="arrow">→</span> trong app là <b>chấm điểm có trọng số</b>.<br><br>
+    <span class="arrow">⇒</span> Để chọn đúng, phải <b>chọn tiêu chí</b> trước: tiêu chí tốt phải <b>liên quan mục tiêu · đo được · phân biệt được · không trùng · có trọng số</b> — đủ 5 đặc điểm này thì cả 2 cơ chế đều giải thích được, không còn "chọn theo cảm tính".
+  </div>
+
+  <h2>7 · Buổi 2 đòi hỏi gì tiếp ở project?</h2>
+  <table>
+    <tr><th>Việc</th><th>Vì sao buổi 2 đòi hỏi</th><th>Trạng thái</th></tr>
+    <tr><td>Kiểm tra 5 tiêu chí qua lăng kính Bảng B</td><td>"Chọn tiêu chí" là nội dung trung tâm buổi 2</td><td class="ok">✅ 5/5 đạt</td></tr>
+    <tr><td>Thí nghiệm S0–S5 thành kịch bản demo/bằng chứng</td><td>"Điều gì làm lựa chọn thay đổi" phải tái lập được</td><td class="ok">✅ đã chạy thật bằng node</td></tr>
+    <tr><td>Cho người dùng sửa trọng số tiêu chí</td><td>Giá trị cá nhân là 1 yếu tố làm lựa chọn đổi (Bảng A)</td><td class="ok">✅ đã có slider trọng số</td></tr>
+    <tr><td>Thu thập phản hồi 3 người dùng thật</td><td>Kiểm chứng ngoài: người thật đổi lựa chọn vì yếu tố nào?</td><td class="todo">⬜ việc của bạn (docs/04)</td></tr>
+  </table>
+
+  <h2>8 · Việc còn mở sau buổi 2</h2>
+  <div>
+    <span class="pill">Thu thập phản hồi ≥3 người dùng thật → docs/04</span>
+    <span class="pill">Khi có tài liệu gốc buổi 2 → đối chiếu lại, sửa theo buổi học và ghi nhật ký "vì sao sửa"</span>
+    <span class="pill">Demo cuối tuần — app sẵn sàng (S0–S5 dùng làm kịch bản demo trực tiếp)</span>
+  </div>
+  <div class="note" style="margin-top:14px;">Lưu ý trung thực: bảng này do agent tổng hợp từ nội dung buổi 2 bạn gửi + tư liệu ngoài (OpenLearn, Symonds Research, 1000minds); khoá học chưa phát hành tài liệu buổi 2 chính thức. Nguyên văn + bảng chi tiết lưu tại <code>buoi-hoc/buoi-02.md</code>.</div>
+</div>
+</body>
+</html>
