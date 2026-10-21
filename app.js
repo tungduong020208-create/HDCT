@@ -10,6 +10,26 @@ let currentPrefs = { mood: "stress", budget: 150, freeHours: 3, indoor: null, en
 let lastRun = null;
 let planned = null;
 const saved = new Set();
+
+// Lưu bền trạng thái (sửa lỗi "Đã lưu/Đã chốt mất khi tải lại trang"):
+// dùng localStorage khi trình duyệt có, im lặng nếu bị chặn (không đưa app ra trạng thái lỗi).
+function loadPersisted() {
+  try {
+    for (const id of JSON.parse(localStorage.getItem("wp_saved") || "[]")) {
+      if (window.CATALOG_DATA && window.CATALOG_DATA.CATALOG.some((it) => it.id === id)) saved.add(id);
+    }
+    const p = JSON.parse(localStorage.getItem("wp_planned") || "null");
+    if (p && p.id && window.CATALOG_DATA.CATALOG.some((it) => it.id === p.id)) planned = p;
+  } catch (e) { /* không có localStorage/sài dữ liệu — giữ trạng thái trong bộ nhớ */ }
+}
+function persistSaved() { try { localStorage.setItem("wp_saved", JSON.stringify([...saved])); } catch (e) {} }
+function persistPlanned() {
+  try {
+    if (planned) localStorage.setItem("wp_planned", JSON.stringify(planned));
+    else localStorage.removeItem("wp_planned");
+  } catch (e) {}
+}
+loadPersisted();
 const MOOD_EMOJI = { thoaimai: "😌", happy: "😄", buon: "🌧️", chan: "😐", stress: "🧖" };
 const VENUE_TXT = { in: "Trong nhà", out: "Ngoài trời", both: "Trong & Ngoài trời" };
 const ENERGY_TXT = { 1: "Nhẹ", 2: "Vừa sức", 3: "Tốn sức" };
@@ -33,13 +53,11 @@ function readPrefsFromUI() {
     budget: num("f-budget"),
     freeHours: num("f-freeHours"),
     indoor: sel("f-indoor"),
-    energy: currentPrefs.energy ?? null,
+    energy: (() => { const e = $("f-energy").value; return e === "" ? null : Number(e); })(),
     social,
     crowd: sel("f-crowd"),
     groupSize,
-    weights: currentPrefs.weights || {
-      mood: 2, budget: 2, time: 2, energy: 2, crowd: 2
-    }
+    weights: currentPrefs.weights // Bug đã sửa: khi người dùng chưa đặt slide trọng số, dùng trọng số mặc định của lõi (mood 0.30 cao nhất theo docs/01 D4) — bản cũ trả {2,2,2,2,2} khiến lõi chuẩn-hoá về 0.20 đều, mất thiết kế
   };
 }
 
@@ -51,7 +69,7 @@ function runAndRender() {
 // ---------- MÀN 1: GỢI Ý ----------
 function renderSuggest() {
   const r = lastRun;
-  $("moodChip").textContent = `${MOOD_EMOJI[currentPrefs.mood]} ${RECOMMENDER.MOOD_LABELS[currentPrefs.mood]}, bình yên`;
+  $("moodChip").textContent = `${MOOD_EMOJI[currentPrefs.mood]} ${RECOMMENDER.MOOD_LABELS[currentPrefs.mood]}`; // đã bỏ đuôi ", bình yên" gắn cứng vô nghĩa với mọi tâm trạng
   const chips = [];
   if (currentPrefs.budget != null) chips.push(`💰 ≤ ${currentPrefs.budget}k`);
   if (currentPrefs.freeHours != null) chips.push(`⏱️ ${currentPrefs.freeHours} giờ`);
@@ -86,7 +104,7 @@ function renderSuggest() {
   const badges = ["#1 Phù hợp nhất", "#2 Lựa chọn sáng tạo", "#3 Ý tưởng bất ngờ", "#4 Đáng cân nhắc", "#5 Dự phòng"];
   box.innerHTML = r.results.slice(0, 5).map((x, i) => {
     const it = x.item;
-    const pr = it.priceRange[0] === it.priceRange[1] ? `${it.priceK}k` : `${it.priceRange[0]}k – ${it.priceRange[1]}k (Rẻ)`;
+    const pr = it.priceRange[0] === it.priceRange[1] ? `${it.priceK}k` : `${it.priceRange[0]}k – ${it.priceRange[1]}k`;
     const reasonsHtml = x.reasons.filter(s => !s.startsWith("▼")).map((s) => s.replace(/(moodFit \d+\/100)/, "<b>$1</b>")).join(" ");
     const mainReason = reasonsHtml || "Cân bằng tốt trên mọi tiêu chí bạn chọn.";
     return `
@@ -132,6 +150,7 @@ function choosePlan(id) {
   const it = window.CATALOG_DATA.CATALOG.find((a) => a.id === id);
   if (!it) return;
   planned = { id: it.id, name: it.name, location: it.location, priceK: it.priceK, hoursMin: it.hoursMin, hoursMax: it.hoursMax };
+  persistPlanned();
   renderPlanned();
   switchView("planned");
   toast(`Đã chốt: ${it.name} ✓`);
@@ -139,9 +158,11 @@ function choosePlan(id) {
 
 // ---------- MÀN 2: CHI TIẾT ----------
 function openDetail(id) {
-  const x = lastRun.results.find((r) => r.item.id === id);
-  if (!x) return;
-  const it = x.item;
+  const x = lastRun && lastRun.results.find((r) => r.item.id === id);
+  // Bug đã sửa: mở chi tiết từ màn "Đã chốt" — nếu hoạt động không còn trong kết quả hiện tại
+  // (tâm trạng/điều kiện vừa đổi), bản cũ return âm thầm nút bấm vô tác dụng.
+  const it = x ? x.item : window.CATALOG_DATA.CATALOG.find((a) => a.id === id);
+  if (!it) return;
   const pr = it.priceRange[0] === it.priceRange[1] ? `${it.priceK}k` : `${it.priceRange[0]}k – ${it.priceRange[1]}k`;
   const moodScore = it.moodFit[currentPrefs.mood] ?? 50;
   const gh = it.goldenHour || `${it.bestHours === "sang" ? "6:00 – 9:00" : it.bestHours === "chieu" ? "15:00 – 17:30" : "18:00 – 21:00"}`;
@@ -154,11 +175,11 @@ function openDetail(id) {
     </div>
     <div class="tag-row">
       <span class="pill p">${it.category}</span>
-      <span class="pill o">⭐ Top #1 Match · ${Math.round(x.score)}/100</span>
+      <span class="pill o">${x ? `⭐ Phù hợp · ${Math.round(x.score)}/100` : "⭐ Kế hoạch đã chốt"}</span>
     </div>
     <div class="res-body" style="padding:12px 16px">
       <div class="info-grid">
-        <div class="info"><div class="ic r">💸</div><div><div class="l">Chi phí / người</div><div class="v">${pr}${it.priceRange[0] !== it.priceRange[1] ? " (Rẻ)" : ""}</div></div></div>
+        <div class="info"><div class="ic r">💸</div><div><div class="l">Chi phí / người</div><div class="v">${pr}</div></div></div>
         <div class="info"><div class="ic b">🕐</div><div><div class="l">Thời lượng</div><div class="v">${it.hoursMin} – ${it.hoursMax} giờ</div></div></div>
         <div class="info"><div class="ic b">⚡</div><div><div class="l">Mức năng lượng</div><div class="v">${ENERGY_TXT[it.energy]}</div></div></div>
         <div class="info"><div class="ic r">👥</div><div><div class="l">Quy mô nhóm</div><div class="v">${it.groupMin} – ${it.groupMax} người</div></div></div>
@@ -167,8 +188,9 @@ function openDetail(id) {
     <div class="why-big">
       <div class="h">🙋 Tại sao hoạt động này dành cho bạn?</div>
       <span class="mood-pill">Khớp tâm trạng: "${RECOMMENDER.MOOD_LABELS[currentPrefs.mood]}"</span>
-      <p>Bạn đang chọn tâm trạng <b>"${RECOMMENDER.MOOD_LABELS[currentPrefs.mood]}"</b>. ${it.name} cho phép bạn nối lại kết nối, không gian yên tĩnh giúp hồi phục sau tuần làm việc, giảm bớt áp lực trước màn hình máy tính. Điểm hợp tâm trạng <b>${moodScore}/100</b> — ${moodScore >= RECOMMENDER.MOOD_FIT_THRESHOLD ? "đạt ngưỡng hợp thật sự." : "chưa cao, cân nhắc thêm lựa chọn khác."}</p>
-      <div class="gh"><span>🕒 Khung giờ vàng: <b>${gh}</b></span><span class="right">Tận bộ mà mệt</span></div>
+      // Bug đã sửa: đoạn văn bản lại mô tả cứng cho tâm trạng "stress" cho MỌI tâm trạng; giờ viết trung tính.
+      <p>Bạn đang chọn tâm trạng <b>"${RECOMMENDER.MOOD_LABELS[currentPrefs.mood]}"</b>. ${it.name} là lựa chọn hợp hướng với tâm trạng đó, đồng thời khớp điều kiện ngân sách/thời gian bạn đặt. Điểm hợp tâm trạng <b>${moodScore}/100</b> — ${moodScore >= RECOMMENDER.MOOD_FIT_THRESHOLD ? "đạt ngưỡng hợp thật sự." : "chưa cao, cân nhắc thêm lựa chọn khác."}</p>
+      <div class="gh"><span>🕒 Khung giờ vàng: <b>${gh}</b></span><span class="right">Vào đúng khung này đông ít hơn</span></div>
     </div>
     <div class="cta-row" style="padding:0 16px">
       <button class="btn-primary" onclick="choosePlan('${id}')">✓ Chốt kế hoạch này!</button>
@@ -205,7 +227,7 @@ function renderDiag() {
         <div class="h">✨ Nới lỏng để mở khoá ngay <span class="note">Giải pháp tức thì</span></div>
         ${diag.relaxations.map((rx, i) => `
           <div class="relax-item">
-            <div class="ic">${i === 0 ? "💰" : "⏱️"}</div>
+            <div class="ic">${rx.field === "budget" ? "💰" : rx.field === "freeHours" ? "⏱️" : rx.field === "indoor" ? "🌦️" : "⚡"}</div>
             <div style="flex:1">
               <div class="t">${rx.title} <span class="unlock">${rx.unlock}</span></div>
               <div class="d">${rx.subtitle}</div>
@@ -231,9 +253,13 @@ function renderFilterForm() {
     <div class="grid2">
       <div><label class="f-label" for="f-indoor">Nơi diễn ra</label>
         <select id="f-indoor"><option value="" ${p.indoor == null ? "selected" : ""}>Tuỳ</option><option value="true" ${p.indoor === true ? "selected" : ""}>Trong nhà</option><option value="false" ${p.indoor === false ? "selected" : ""}>Ngoài trời</option></select></div>
+      <div><label class="f-label" for="f-energy">Mức năng lượng</label>
+        <select id="f-energy"><option value="" ${p.energy == null ? "selected" : ""}>Tuỳ</option><option value="1" ${p.energy == 1 ? "selected" : ""}>Nhẹ</option><option value="2" ${p.energy == 2 ? "selected" : ""}>Vừa sức</option><option value="3" ${p.energy == 3 ? "selected" : ""}>Tốn sức</option></select></div>
+    </div>
+    <div class="grid2">
       <div><label class="f-label" for="f-crowd">Không khí</label>
         <select id="f-crowd"><option value="" ${p.crowd == null ? "selected" : ""}>Tuỳ</option><option value="1" ${p.crowd == 1 ? "selected" : ""}>Yên tĩnh</option><option value="2" ${p.crowd == 2 ? "selected" : ""}>Vừa phải</option><option value="3" ${p.crowd == 3 ? "selected" : ""}>Sầm uất</option></select></div>
-    </div>
+      <div><label class="f-label" for="f-companion">Đi cùng ai / nhóm</label>
     <div><label class="f-label" for="f-companion">Đi cùng ai / nhóm</label>
       <select id="f-companion">
         <option value="anyone" ${companionValue === "anyone" ? "selected" : ""}>Tuỳ ý</option>
@@ -242,7 +268,7 @@ function renderFilterForm() {
         <option value="small" ${companionValue === "small" ? "selected" : ""}>3–5 người</option>
         <option value="big" ${companionValue === "big" ? "selected" : ""}>6–8 người</option>
         <option value="friends" ${companionValue === "friends" ? "selected" : ""}>Cùng bạn bè</option>
-      </select>
+      </select></div>
     </div>
     <button class="btn-primary" style="width:100%;margin-top:12px" onclick="applyForm()">Áp dụng & xem gợi ý</button>`;
 }
@@ -267,6 +293,7 @@ function toggleSave(id, btn) {
   const it = window.CATALOG_DATA.CATALOG.find((a) => a.id === id);
   if (saved.has(id)) { saved.delete(id); toast(`Đã bỏ lưu: ${it.name}`); }
   else { saved.add(id); toast(`Đã lưu: ${it.name} 🔖`); }
+  persistSaved();
   renderSaved();
   renderSuggest();
 }

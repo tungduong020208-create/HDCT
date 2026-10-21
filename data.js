@@ -63,9 +63,9 @@ for (const it of CATALOG) {
 const MOCK_LOCATIONS = {
   "ngu-trua": "Tại nhà bạn", "xem-phim-nha": "Tại nhà bạn", "doc-sach-cafe": "Phố_BOOK & Nguyễn Xí, Hà Nội",
   "cafe-choi-ban": "Quang Trung & Trịnh Hoài Đức", "an-quan-moi": "Khu Ẩm thực Hoàng Quốc Việt", "bbai-bien": "Bãi tắm đông, Đồ Sơn / Sầm Sơn",
-  "leo-nui": "Núi Trầm & Tân Triều", "dap-xe": "Công viên hồ Tây & đường和 sustainability", "bong-da": "Sân Goaly Nam An & Mỹ Đình",
-  "gym": "Phòng tập quanh khu bạn ở", "cho-dem": "Phố đi bộ Hồ Gươm & chợ đêm", "karaoke": "Karaok-quanh Đại học Bách Khoa",
-  "board-game": "Board Game Cafe Xa Đàn", "bao-tang": "Bảo tàng Hà Nội & VCCA", "hoc-moi": "Workshop phố твор Trúc Bạch",
+  "leo-nui": "Núi Trầm & Tân Triều", "dap-xe": "Công viên hồ Tây & đường vành đai hồ", "bong-da": "Sân Goaly Nam An & Mỹ Đình",
+  "gym": "Phòng tập quanh khu bạn ở", "cho-dem": "Phố đi bộ Hồ Gươm & chợ đêm", "karaoke": "Karaoke quanh Đại học Bách Khoa",
+  "board-game": "Board Game Cafe Xa Đàn", "bao-tang": "Bảo tàng Hà Nội & VCCA", "hoc-moi": "Workshop phố Trúc Bạch",
   "don-nha": "Tại nhà bạn", "du-lich-gan": "Tam Cốc – Tràng An / đồi chè Mộc Châu"
 };
 for (const it of CATALOG) {
